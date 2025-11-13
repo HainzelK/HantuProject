@@ -12,6 +12,7 @@ Library: D:\Unity\Projects\HantuProject-BudayaGO\Temp\BurstOutput\tempburstlibs\
 --float-mode=Fast
 --generate-link-xml=Temp\burst.link.xml
 --temp-folder=D:\Unity\Projects\HantuProject-BudayaGO\Temp\Burst
+--debug=Full
 --key-folder=C:/Program Files/Unity/Hub/Editor/6000.0.60f1/Editor/Data/PlaybackEngines/AndroidPlayer
 --decode-folder=D:\Unity\Projects\HantuProject-BudayaGO\Library\Burst
 --output=D:\Unity\Projects\HantuProject-BudayaGO\Temp\BurstOutput\tempburstlibs\arm64-v8a\lib_burst_generated
@@ -30,6 +31,7 @@ Library: D:\Unity\Projects\HantuProject-BudayaGO\Temp\BurstOutput\tempburstlibs\
 --target-framework=NetFramework
 --generate-link-xml=Temp\burst.link.xml
 --temp-folder=D:\Unity\Projects\HantuProject-BudayaGO\Temp\Burst
+--debug=Full
 --key-folder=C:/Program Files/Unity/Hub/Editor/6000.0.60f1/Editor/Data/PlaybackEngines/AndroidPlayer
 --decode-folder=D:\Unity\Projects\HantuProject-BudayaGO\Library\Burst
 --output=D:\Unity\Projects\HantuProject-BudayaGO\Temp\BurstOutput\tempburstlibs\arm64-v8a\lib_burst_generated
