@@ -76,4 +76,3 @@ crashlytics-build.properties
 
 # Env
 .env
-Assets/Resources/HuggingFaceAPIConfig.asset
