@@ -1,64 +1,36 @@
 using UnityEngine;
-using UnityEngine.XR.ARFoundation;
-using Unity.XR.CoreUtils;
 
 public class ARRandomSpawner : MonoBehaviour
 {
-    [Header("References")]
-    public XROrigin xrOrigin;
     public Camera arCamera;
     public GameObject cubePrefab;
-    public Transform virtualPlayer;   // NEW
+    public Transform virtualPlayer;
 
-    [Header("Spawn Settings")]
     public float spawnDistance = 2.5f;
-    public float minAngle = 0f;
-    public float maxAngle = 360f;
-    public float spawnInterval = 10f;
+    public float spawnInterval = 5f;
 
-    private float spawnTimer = 0f;
-    private bool initialized = false;
-
-    void Start()
-    {
-        if (xrOrigin == null || arCamera == null || cubePrefab == null)
-        {
-            Debug.LogError("Assign XR Origin, AR Camera, Cube Prefab, VirtualPlayer.");
-            return;
-        }
-
-        if (virtualPlayer == null)
-        {
-            Debug.LogError("Assign the VirtualPlayer transform.");
-            return;
-        }
-
-        initialized = true;
-    }
+    private float timer;
 
     void Update()
     {
-        if (!initialized) return;
+        timer += Time.deltaTime;
 
-        spawnTimer += Time.deltaTime;
-        if (spawnTimer >= spawnInterval)
+        if (timer >= spawnInterval)
         {
-            spawnTimer = 0f;
-            SpawnRandomCube();
+            timer = 0f;
+            SpawnCube();
         }
     }
 
-    void SpawnRandomCube()
+    void SpawnCube()
     {
-        float angle = Random.Range(minAngle, maxAngle);
+        float angle = Random.Range(0f, 360f);
         Vector3 dir = Quaternion.Euler(0f, angle, 0f) * Vector3.forward;
+        Vector3 pos = arCamera.transform.position + dir.normalized * spawnDistance;
 
-        Vector3 spawnPos = arCamera.transform.position + dir.normalized * spawnDistance;
-
-        GameObject cube = Instantiate(cubePrefab, spawnPos, Quaternion.identity);
+        GameObject cube = Instantiate(cubePrefab, pos, Quaternion.identity);
 
         CubeMover mover = cube.GetComponent<CubeMover>();
-        if (mover == null) mover = cube.AddComponent<CubeMover>();
-        mover.target = virtualPlayer;   // CHANGED
+        mover.target = virtualPlayer;
     }
 }
