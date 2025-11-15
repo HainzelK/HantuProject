@@ -1,6 +1,5 @@
 using System.Collections;
 using System.IO;
-using HuggingFace.API;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Networking;

@@ -527,21 +527,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 778519557}
   m_CullTransparentMesh: 1
---- !u!115 &936504670
-MonoScript:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: 
-  serializedVersion: 7
-  m_DefaultReferences: {}
-  m_Icon: {fileID: 0}
-  m_Type: 0
-  m_ExecutionOrder: 0
-  m_ClassName: Extensions/CoroutineRunner
-  m_Namespace: HuggingFace.API
-  m_AssemblyName: HuggingFaceAPI
 --- !u!1 &1205951908
 GameObject:
   m_ObjectHideFlags: 0
@@ -678,50 +663,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1205951908}
   m_CullTransparentMesh: 1
---- !u!1 &1307261762
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1307261764}
-  - component: {fileID: 1307261763}
-  m_Layer: 0
-  m_Name: HuggingFaceAPI_CoroutineRunner
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1307261763
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1307261762}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 936504670}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!4 &1307261764
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1307261762}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1976422450
 GameObject:
   m_ObjectHideFlags: 0
@@ -1065,4 +1006,3 @@ SceneRoots:
   - {fileID: 388261452}
   - {fileID: 2074397603}
   - {fileID: 72787560}
-  - {fileID: 1307261764}
