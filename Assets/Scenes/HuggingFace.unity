@@ -176,12 +176,14 @@ MonoBehaviour:
     displayColor: {r: 0.745283, g: 0.71837664, b: 0.03163936, a: 0}
   - spellName: Jene
     variations:
+    - Jene
     - "D\u1ECBch n\u1EC7m"
     - "D. N\xE3y"
     - "Ch\u1ECB n\xE8"
     - "\uC81C\uB124"
     - "\uCA68\uB124"
     - "\uCCB4\uB124"
+    - Jikne
     displayColor: {r: 0.043075833, g: 0.20675266, b: 0.8301887, a: 0}
   - spellName: Api
     variations:
