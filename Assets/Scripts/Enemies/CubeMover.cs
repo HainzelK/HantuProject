@@ -2,35 +2,79 @@ using UnityEngine;
 
 public class CubeMover : MonoBehaviour
 {
+    [Header("Movement Settings")]
     public Transform target;
-    public float moveSpeed = 1.5f;
-    public float stopDistance = 0.3f;
+    public float baseSpeed = 0.8f;
+    public float acceleration = 0.5f;
+    public float rotateSpeed = 5f;
 
-    public void SetTarget(Transform t)
+    [Header("Stopping Settings")]
+    public float stopDistance = 0.45f;
+    public float destroyDelay = 0.3f;
+
+    private float currentSpeed = 0f;
+    private bool isDying = false;
+
+    void Start()
     {
-        target = t;
+        currentSpeed = baseSpeed;
+
+        if (target == null)
+        {
+            GameObject vp = GameObject.Find("Virtual Player");
+            if (vp != null)
+                target = vp.transform;
+            else
+                Debug.LogError("CubeMover: VirtualPlayer not found!");
+        }
     }
+
 
     void Update()
     {
-        if (target == null)
-            return;
+        if (isDying || target == null) return;
 
-        Vector3 dir = (target.position - transform.position).normalized;
+        Vector3 myPos = transform.position;
+        Vector3 targetPos = target.position;
+        Vector3 flatTarget = new Vector3(targetPos.x, myPos.y, targetPos.z);
 
-        float dist = Vector3.Distance(transform.position, target.position);
+        float distance = Vector3.Distance(myPos, flatTarget);
 
-        if (dist > stopDistance)
+        if (distance > stopDistance)
         {
-            transform.position += dir * moveSpeed * Time.deltaTime;
-        }
+            currentSpeed += acceleration * Time.deltaTime;
 
-        transform.LookAt(target);
+            Vector3 dir = (flatTarget - myPos).normalized;
+            Quaternion look = Quaternion.LookRotation(dir, Vector3.up);
+            transform.rotation = Quaternion.Slerp(transform.rotation, look, rotateSpeed * Time.deltaTime);
+
+            transform.position += transform.forward * currentSpeed * Time.deltaTime;
+        }
+        else
+        {
+            // Cube reached player – DO NOT count as kill
+            DieNoScore();
+        }
     }
 
-    private void OnDestroy()
+    void OnCollisionEnter(Collision col)
     {
-        if (WaveManager.Instance != null)
-            WaveManager.Instance.ReportCubeKilled();
+        if (isDying) return;
+
+        if (col.collider.CompareTag("Projectile"))
+        {
+            // Count kill
+            isDying = true;
+            WaveManager.Instance.CubeKilled();
+
+            Destroy(col.gameObject);
+            Destroy(gameObject, destroyDelay);
+        }
+    }
+
+    void DieNoScore()
+    {
+        isDying = true;
+        Destroy(gameObject, destroyDelay);
     }
 }
