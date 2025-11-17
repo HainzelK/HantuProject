@@ -6,8 +6,10 @@ public class ProjectileCollision : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("Cube"))
         {
-            Destroy(collision.gameObject);
-            Destroy(gameObject);
+            WaveManager.Instance.CubeKilled();
+            Destroy(collision.gameObject);  // destroy cube
+            Destroy(gameObject);           // destroy projectile
         }
     }
+
 }
