@@ -173,30 +173,29 @@ MonoBehaviour:
     - "\uB974\uB5BC"
     - Lete
     - "\uB808\uD14C"
-    displayColor: {r: 0.745283, g: 0.71837664, b: 0.03163936, a: 0}
-  - spellName: Jene
+  - spellName: uae
     variations:
-    - Jene
-    - "D\u1ECBch n\u1EC7m"
-    - "D. N\xE3y"
-    - "Ch\u1ECB n\xE8"
-    - "\uC81C\uB124"
-    - "\uCA68\uB124"
-    - "\uCCB4\uB124"
-    - Jikne
-    displayColor: {r: 0.043075833, g: 0.20675266, b: 0.8301887, a: 0}
+    - Wayne
+    - When
+    - Wow
+    - Wang
+    - Way
+    - "\uC6E8\uC778"
+    - "\uC640\uC778"
+    - "\uC640\uC5D0"
+    - "\uC640\uC789"
+    - "\u5582"
+    - Wah
   - spellName: Api
     variations:
     - Api
     - "A v\xEDm"
-    displayColor: {r: 0.8301887, g: 0.011747932, b: 0.011747932, a: 0}
   - spellName: Lompo
     variations:
     - Lompo
     - Lompuh
     - Lompok
     - "\uB871\uBF40"
-    displayColor: {r: 0.091009945, g: 0.7264151, b: 0.01027944, a: 0}
   similarityThreshold: 2
 --- !u!1 &388261448
 GameObject:

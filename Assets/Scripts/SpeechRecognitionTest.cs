@@ -182,7 +182,7 @@ public class SpeechRecognitionTest : MonoBehaviour
             case "Api":
                 // Lempar api
                 break;
-            case "Jene":
+            case "uae":
                 // Lempar air
                 break;
             default:
