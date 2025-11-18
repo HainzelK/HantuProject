@@ -58,44 +58,26 @@ void SpawnCube360()
 {
     float angle = Random.Range(0f, 360f);
     Vector3 dir = Quaternion.Euler(0f, angle, 0f) * Vector3.forward;
+    Vector3 spawnPos = playerTarget.position + dir * spawnDistance + Vector3.up * heightOffset;
 
-    Vector3 spawnPos = playerTarget.position +
-                       dir.normalized * spawnDistance +
-                       new Vector3(0, heightOffset, 0);
-
-    // Spawn cube
     GameObject cube = Instantiate(cubePrefab, spawnPos, Quaternion.identity);
 
-    Debug.Log($"[Spawn Debug] Cube prefab: {cubePrefab.name}, Instance: {cube.name}");
-
-    // Assign CubeMover target
+    // Add and configure CubeMover
     CubeMover mover = cube.GetComponent<CubeMover>();
     if (mover != null)
         mover.target = playerTarget;
-    else
-        Debug.LogWarning("[Spawn Debug] CubeMover not found on spawned cube!");
 
-    // Debug check before adding CubeTracker
-    CubeTracker tracker = cube.GetComponent<CubeTracker>();
-    tracker.waveManager = this;
-    if (tracker == null)
-    {
-        Debug.LogWarning("[Spawn Debug] CubeTracker NOT found. Adding new component.");
-        tracker = cube.AddComponent<CubeTracker>();
-    }
-    else
-    {
-        Debug.Log("[Spawn Debug] CubeTracker already exists on cube.");
-    }
-
-    // Assign waveManager and reset state
+    // 🔥 Always add FRESH CubeTracker and assign IMMEDIATELY
+    CubeTracker tracker = cube.AddComponent<CubeTracker>();
     tracker.waveManager = this;
     tracker.killedByProjectile = false;
 
-    // Final confirmation
-    Debug.Log($"[Spawn Debug] CubeTracker exists? {tracker != null}, WaveManager assigned? {tracker.waveManager != null}");
-}
+    // Optional: force initialization
+    cube.SetActive(false);
+    cube.SetActive(true); // ensures Awake/OnEnable runs AFTER assignment
 
+    Debug.Log($"[Spawn] Cube {cube.name} spawned with WaveManager: {(tracker.waveManager != null ? "YES" : "NO")}");
+}
 
     // Only called when a cube is killed by a projectile
 public void RegisterKill()
