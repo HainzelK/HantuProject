@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 7420236945593068279}
   - component: {fileID: 3004659866777188372}
   - component: {fileID: -3347814700001141613}
+  - component: {fileID: 4309954120884504691}
   m_Layer: 0
   m_Name: Cube
   m_TagString: Cube
@@ -128,3 +129,17 @@ MonoBehaviour:
   stopDistance: 0.45
   destroyOnReach: 1
   destroyDelay: 0.5
+--- !u!114 &4309954120884504691
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8428577008010722953}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c378c6ccc7b6d74fab37ab12e634660, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  waveManager: {fileID: 0}
+  killedByProjectile: 0

@@ -488,8 +488,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 471648145}
-  - component: {fileID: 471648147}
-  - component: {fileID: 471648146}
   m_Layer: 0
   m_Name: AR Manager
   m_TagString: Untagged
@@ -512,42 +510,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 4.393, z: 0}
---- !u!114 &471648146
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 471648142}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c3aa20b15e4ca0d4d8ca65f13890a9b1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  target: {fileID: 0}
-  baseSpeed: 0.8
-  acceleration: 0.5
-  rotateSpeed: 5
-  stopDistance: 0.45
-  destroyOnReach: 1
-  destroyDelay: 0.5
---- !u!114 &471648147
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 471648142}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 33e28b65c67a16949bd40dce04aa16d8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  arCamera: {fileID: 1678815541}
-  cubePrefab: {fileID: 8428577008010722953, guid: 5e63758b1d16e90419c71d506bdb2c76, type: 3}
-  virtualPlayer: {fileID: 1311556198}
-  spawnDistance: 2.5
-  spawnInterval: 5
 --- !u!1 &832575517
 GameObject:
   m_ObjectHideFlags: 0
