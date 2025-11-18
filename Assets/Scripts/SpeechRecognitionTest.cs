@@ -14,8 +14,6 @@ public class Spell
     public string spellName;
     [Tooltip("Daftar semua kemungkinan cara Whisper akan menulis mantra ini (termasuk bahasa lain).")]
     public List<string> variations;
-    [Tooltip("Warna yang akan ditampilkan saat mantra ini berhasil terdeteksi.")]
-    public Color displayColor;
 }
 
 public class SpeechRecognitionTest : MonoBehaviour
@@ -26,7 +24,7 @@ public class SpeechRecognitionTest : MonoBehaviour
 
     [Header("Pengaturan Mantra")]
     [SerializeField] private Spell[] spells;
-    [Tooltip("Seberapa toleran pencocokan kata? 1 atau 2 adalah awal yang baik.")]
+    [Tooltip("Seberapa toleran pencocokan kata? 1 atau 2 direkomendasikan.")]
     [SerializeField] private int similarityThreshold = 2;
 
     private AudioClip clip;
@@ -109,7 +107,6 @@ public class SpeechRecognitionTest : MonoBehaviour
 
         if (overallBestSpell != null && overallMinDistance <= similarityThreshold)
         {
-            text.color = overallBestSpell.displayColor;
             text.text = $"Terdeteksi: {overallBestSpell.spellName} (Hasil asli: {transcribedText})";
             OnKeywordDetected(overallBestSpell);
         }
