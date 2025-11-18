@@ -3,18 +3,19 @@ using UnityEngine;
 public class CubeTracker : MonoBehaviour
 {
     public WaveManager waveManager;
+    public bool killedByProjectile = false;
 
-    // Called when projectile hits the cube
-    public void MarkKilledByProjectile()
+    void OnDestroy()
     {
-        if (waveManager == null)
-        {
-            Debug.LogError("CubeTracker: waveManager is NULL!");
-            return;
-        }
+        if (waveManager == null) return;
 
-        Debug.Log("CubeTracker: Cube killed by projectile");
-        waveManager.OnCubeKilledByPlayer();
-        Destroy(gameObject);
+        if (killedByProjectile)
+        {
+            waveManager.RegisterKill();
+        }
+        else
+        {
+            Debug.Log("Cube died NOT from projectile — ignoring");
+        }
     }
 }

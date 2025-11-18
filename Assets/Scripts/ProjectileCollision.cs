@@ -6,18 +6,14 @@ public class ProjectileCollision : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("Cube"))
         {
+            Debug.Log("Projectile hit cube — KILL!");
+
             CubeTracker tracker = collision.gameObject.GetComponent<CubeTracker>();
             if (tracker != null)
-            {
-                tracker.MarkKilledByProjectile();
-            }
-            else
-            {
-                Debug.LogWarning("Cube has no CubeTracker! Destroying fallback.");
-                Destroy(collision.gameObject);
-            }
+                tracker.killedByProjectile = true;
 
-            Destroy(gameObject); // Destroy the projectile
+            Destroy(collision.gameObject);
+            Destroy(gameObject);
         }
     }
 }

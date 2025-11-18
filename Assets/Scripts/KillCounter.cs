@@ -1,22 +1,16 @@
 using UnityEngine;
-using TMPro;
 
 public class KillCounter : MonoBehaviour
 {
-    public static KillCounter Instance;
-
-    public TMP_Text killText;
-    private int killCount = 0;
-
-    void Awake()
+    // Start is called once before the first execution of Update after the MonoBehaviour is created
+    void Start()
     {
-        Instance = this;
+        
     }
 
-    public void AddKill()
+    // Update is called once per frame
+    void Update()
     {
-        killCount++;
-        killText.text = "Kills: " + killCount;
-        Debug.Log("KILL COUNT UPDATED → " + killCount);
+        
     }
 }

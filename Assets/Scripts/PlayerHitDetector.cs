@@ -6,8 +6,10 @@ public class PlayerHitDetector : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("Cube"))
         {
-            Debug.Log("Cube hit player — NOT a kill");
-            Destroy(collision.gameObject);
+            Debug.Log("Cube reached player — NOT counting as kill");
+
+            // DO NOT set tracker.wasKilledByPlayer
+            Destroy(collision.gameObject);  
         }
     }
 }
