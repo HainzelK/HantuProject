@@ -3,7 +3,14 @@ using UnityEngine;
 public class CubeTracker : MonoBehaviour
 {
     public WaveManager waveManager;
-    public bool killedByProjectile = false;
+    public bool killedByProjectile;
+
+    // Reset when spawned (if using pooling, call this manually)
+    public void Reset(WaveManager wm)
+    {
+        waveManager = wm;
+        killedByProjectile = false;
+    }
 
     void OnDestroy()
     {

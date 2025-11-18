@@ -965,7 +965,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   killedByProjectile: 0
   cubePrefab: {fileID: 8428577008010722953, guid: 5e63758b1d16e90419c71d506bdb2c76, type: 3}
-  playerTarget: {fileID: 1311556198}
+  playerTarget: {fileID: 1678815536}
   waveText: {fileID: 471167484}
   killText: {fileID: 2104994749}
   spawnDistance: 2.5
