@@ -5,8 +5,6 @@ using System.Collections;
 public class WaveManager : MonoBehaviour
 {
 
-        [HideInInspector]
-    public WaveManager waveManager;
 
     [HideInInspector]
     public bool killedByProjectile = false;
@@ -24,13 +22,12 @@ public class WaveManager : MonoBehaviour
     private int aliveCubes;
     public int killCount = 0;
 
-    void Start()
-    {
-        Debug.Log("WaveManager STARTED");
-        StartWave();
-        if (waveManager == null)
-        Debug.LogError("WaveManager reference missing on CubeTracker!");
-    }
+void Start()
+{
+    Debug.Log("WaveManager STARTED");
+    StartWave();
+}
+
 
     void StartWave()
     {
@@ -69,20 +66,34 @@ void SpawnCube360()
     // Spawn cube
     GameObject cube = Instantiate(cubePrefab, spawnPos, Quaternion.identity);
 
+    Debug.Log($"[Spawn Debug] Cube prefab: {cubePrefab.name}, Instance: {cube.name}");
+
     // Assign CubeMover target
     CubeMover mover = cube.GetComponent<CubeMover>();
     if (mover != null)
         mover.target = playerTarget;
+    else
+        Debug.LogWarning("[Spawn Debug] CubeMover not found on spawned cube!");
 
-    // ✅ Ensure CubeTracker exists and assign WaveManager
+    // Debug check before adding CubeTracker
     CubeTracker tracker = cube.GetComponent<CubeTracker>();
-    if (tracker == null)
-        tracker = cube.AddComponent<CubeTracker>();
-
     tracker.waveManager = this;
+    if (tracker == null)
+    {
+        Debug.LogWarning("[Spawn Debug] CubeTracker NOT found. Adding new component.");
+        tracker = cube.AddComponent<CubeTracker>();
+    }
+    else
+    {
+        Debug.Log("[Spawn Debug] CubeTracker already exists on cube.");
+    }
 
-    // Debug check
-    Debug.Log($"Spawned cube: {cube.name}, CubeTracker exists? {tracker != null}, WaveManager assigned? {tracker.waveManager != null}");
+    // Assign waveManager and reset state
+    tracker.waveManager = this;
+    tracker.killedByProjectile = false;
+
+    // Final confirmation
+    Debug.Log($"[Spawn Debug] CubeTracker exists? {tracker != null}, WaveManager assigned? {tracker.waveManager != null}");
 }
 
 
