@@ -4,35 +4,35 @@ using System.Collections;
 
 public class WaveManager : MonoBehaviour
 {
+    [Header("UI")]
+    public TMP_Text waveText;
+    public TMP_Text killText;
+
+    [Header("Spawning")]
     public GameObject cubePrefab;
     public Transform playerTarget;
-    public TMP_Text waveText;
-
     public float spawnDistance = 2.5f;
-    public float heightOffset = 0f;
     public float spawnInterval = 3f;
 
     private int waveNumber = 1;
     private int cubesToSpawn;
-    private int aliveCubes;
-    public int killCount = 0; // ✔ track real kills
+    private int killsThisWave;
 
     void Start()
     {
-        Debug.Log("WaveManager STARTED");
         StartWave();
     }
 
     void StartWave()
     {
-        Debug.Log($"\n=== STARTING WAVE {waveNumber} ===");
+        killsThisWave = 0;
+        cubesToSpawn = 2 + (waveNumber - 1); // Wave 1 = 2 cubes, +1 each wave
 
-        cubesToSpawn = 2 + (waveNumber - 1);
-        aliveCubes = cubesToSpawn;
-        killCount = 0; // ✔ reset kills for new wave
+        waveText.text = $"Wave {waveNumber}";
+        killText.text = $"Kills: {killsThisWave} / {cubesToSpawn}";
 
-        waveText.text = "Wave " + waveNumber;
-        Debug.Log("Cubes to spawn: " + cubesToSpawn);
+        Debug.Log($"=== STARTING WAVE {waveNumber} ===");
+        Debug.Log($"Cubes to spawn this wave: {cubesToSpawn}");
 
         StartCoroutine(SpawnWaveRoutine());
     }
@@ -41,45 +41,49 @@ public class WaveManager : MonoBehaviour
     {
         for (int i = 0; i < cubesToSpawn; i++)
         {
-            SpawnCube360();
+            SpawnCube();
             yield return new WaitForSeconds(spawnInterval);
         }
     }
 
-    void SpawnCube360()
+void SpawnCube()
+{
+    float angle = Random.Range(0f, 360f);
+    Vector3 dir = Quaternion.Euler(0f, angle, 0f) * Vector3.forward;
+    Vector3 spawnPos = playerTarget.position + dir * spawnDistance;
+
+    GameObject cube = Instantiate(cubePrefab, spawnPos, Quaternion.identity);
+
+    // Ensure CubeTracker exists
+    CubeTracker tracker = cube.GetComponent<CubeTracker>();
+    if (tracker == null)
     {
-        float angle = Random.Range(0f, 360f);
-        Vector3 dir = Quaternion.Euler(0f, angle, 0f) * Vector3.forward;
-
-        Vector3 spawnPos = playerTarget.position +
-                           dir.normalized * spawnDistance +
-                           new Vector3(0, heightOffset, 0);
-
-        Debug.Log($"Spawning cube at angle {angle}°, position {spawnPos}");
-
-        GameObject cube = Instantiate(cubePrefab, spawnPos, Quaternion.identity);
-
-        CubeMover mover = cube.GetComponent<CubeMover>();
-        mover.target = playerTarget;
-
-        CubeTracker tracker = cube.AddComponent<CubeTracker>();
-        tracker.waveManager = this;
+        tracker = cube.AddComponent<CubeTracker>();
+        Debug.LogWarning("CubeTracker added dynamically to prefab!");
     }
 
-    // ❌ NO LONGER CALLED ON CUBE DESTROY
-    // We only use it if it’s a real kill
-    public void RegisterKill()
+    // ✅ Assign the WaveManager to the spawned cube
+    tracker.waveManager = this;
+
+    // Assign the target for movement
+    CubeMover mover = cube.GetComponent<CubeMover>();
+    if (mover != null) mover.target = playerTarget;
+
+    Debug.Log($"Spawned cube at {spawnPos}");
+}
+
+    // Called only when a projectile kills a cube
+    public void OnCubeKilledByPlayer()
     {
-        killCount++;
-        aliveCubes--;
+        killsThisWave++;
+        killText.text = $"Kills: {killsThisWave} / {cubesToSpawn}";
+        Debug.Log($"KILL REGISTERED ({killsThisWave}/{cubesToSpawn})");
 
-        Debug.Log($"Cube killed by projectile! Kills: {killCount}/{cubesToSpawn}");
-
-        if (aliveCubes <= 0)
+        if (killsThisWave >= cubesToSpawn)
         {
-            Debug.Log($"\n=== WAVE {waveNumber} COMPLETED ===");
+            Debug.Log($"=== WAVE {waveNumber} COMPLETE ===");
             waveNumber++;
-            Invoke(nameof(StartWave), 1f);
+            Invoke(nameof(StartWave), 1.5f);
         }
     }
 }
