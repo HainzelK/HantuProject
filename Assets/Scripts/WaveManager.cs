@@ -5,11 +5,11 @@ using System.Collections;
 public class WaveManager : MonoBehaviour
 {
 
-    //     [HideInInspector]
-    // public WaveManager waveManager;
+        [HideInInspector]
+    public WaveManager waveManager;
 
-    // [HideInInspector]
-    // public bool killedByProjectile = false;
+    [HideInInspector]
+    public bool killedByProjectile = false;
     public GameObject cubePrefab;
     public Transform playerTarget;
     public TMP_Text waveText;
@@ -24,16 +24,13 @@ public class WaveManager : MonoBehaviour
     private int aliveCubes;
     public int killCount = 0;
 
-void Start()
-{
-    Debug.Log("WaveManager STARTED");
-    StartWave();
-
-    // ❌ Removed: WaveManager does not need a reference to itself
-    // if (waveManager == null)
-    //     Debug.LogError("WaveManager reference missing on CubeTracker!");
-}
-
+    void Start()
+    {
+        Debug.Log("WaveManager STARTED");
+        StartWave();
+        if (waveManager == null)
+        Debug.LogError("WaveManager reference missing on CubeTracker!");
+    }
 
     void StartWave()
     {
@@ -69,23 +66,24 @@ void SpawnCube360()
                        dir.normalized * spawnDistance +
                        new Vector3(0, heightOffset, 0);
 
+    // Spawn cube
     GameObject cube = Instantiate(cubePrefab, spawnPos, Quaternion.identity);
 
-    // CubeMover setup
+    // Assign CubeMover target
     CubeMover mover = cube.GetComponent<CubeMover>();
     if (mover != null)
         mover.target = playerTarget;
 
-    // ✅ Always ensure CubeTracker exists
+    // ✅ Ensure CubeTracker exists and assign WaveManager
     CubeTracker tracker = cube.GetComponent<CubeTracker>();
     if (tracker == null)
         tracker = cube.AddComponent<CubeTracker>();
 
     tracker.waveManager = this;
 
+    // Debug check
     Debug.Log($"Spawned cube: {cube.name}, CubeTracker exists? {tracker != null}, WaveManager assigned? {tracker.waveManager != null}");
 }
-
 
 
     // Only called when a cube is killed by a projectile

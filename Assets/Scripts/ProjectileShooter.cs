@@ -1,61 +1,68 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 public class ProjectileShooter : MonoBehaviour
 {
-    [Header("Projectile Settings")]
+    [Header("Projectile")]
     public GameObject projectilePrefab;
     public float shootForce = 12f;
-    public float spawnOffset = 0.25f;
+    public float spawnOffset = 0.25f; // meters in front of camera
     public float projectileLifetime = 8f;
-
-    [Header("Cooldown")]
-    public float shootCooldown = 0.2f; // seconds between shots
-    private float lastShootTime = 0f;
 
     void Update()
     {
-        bool tapDetected = false;
-
-        // Touch detection
-        if (Touchscreen.current != null && Touchscreen.current.primaryTouch.press.wasPressedThisFrame)
-            tapDetected = true;
-
-        // Mouse detection (editor / standalone)
-        if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
-            tapDetected = true;
-
-        // Shoot if tap detected and cooldown elapsed
-        if (tapDetected && Time.time - lastShootTime >= shootCooldown)
+        // Support both touch (mobile) and mouse (editor)
+        if (IsTap())
         {
-            ShootProjectile();
-            lastShootTime = Time.time;
+            TryShoot();
         }
     }
 
-    void ShootProjectile()
+    bool IsTap()
+    {
+        // Mobile: detect first touch began
+        if (Input.touchCount > 0)
+        {
+            Touch t = Input.GetTouch(0);
+            if (t.phase == TouchPhase.Began) return true;
+        }
+
+        // Editor / standalone: left mouse button down
+        #if UNITY_EDITOR || UNITY_STANDALONE
+        if (Input.GetMouseButtonDown(0)) return true;
+        #endif
+
+        return false;
+    }
+
+    void TryShoot()
     {
         if (projectilePrefab == null)
         {
-            Debug.LogError("[ProjectileShooter] projectilePrefab is NOT assigned!");
+            Debug.LogError("[ProjectileShooterEnhanced] projectilePrefab is NOT assigned!");
             return;
         }
 
+        // Spawn position and rotation from camera
         Transform cam = transform;
         Vector3 spawnPos = cam.TransformPoint(Vector3.forward * spawnOffset);
         Quaternion spawnRot = cam.rotation;
 
         GameObject proj = Instantiate(projectilePrefab, spawnPos, spawnRot);
+        if (proj == null)
+        {
+            Debug.LogError("[ProjectileShooterEnhanced] Instantiate returned null!");
+            return;
+        }
 
-        // Rigidbody
+        // Ensure it has a Rigidbody
         Rigidbody rb = proj.GetComponent<Rigidbody>();
         if (rb == null)
         {
             rb = proj.AddComponent<Rigidbody>();
-            rb.useGravity = false;
+            rb.useGravity = false; // default to no gravity for AR projectile
         }
 
-        // Collider
+        // Ensure it has a Collider
         Collider col = proj.GetComponent<Collider>();
         if (col == null)
         {
@@ -67,9 +74,12 @@ public class ProjectileShooter : MonoBehaviour
         rb.linearVelocity = Vector3.zero;
         rb.AddForce(cam.forward * shootForce, ForceMode.Impulse);
 
-        // Auto destroy
+        // Optional: tag for collision script (if you rely on tag checks)
+        // proj.tag = "Projectile";
+
+        // auto destroy
         Destroy(proj, projectileLifetime);
 
-        Debug.Log("[ProjectileShooter] Spawned projectile at " + spawnPos);
+        Debug.Log("[ProjectileShooterEnhanced] Spawned projectile at " + spawnPos);
     }
 }
