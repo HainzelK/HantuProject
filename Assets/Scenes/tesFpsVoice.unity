@@ -897,12 +897,16 @@ MonoBehaviour:
     variations:
     - "\uB808\uD14C"
     - "\uB974\uB5BC"
+    - "\uB80C\uD2B8"
+    - "\uC5B4\uB54C"
   - spellName: Lompo
     variations:
     - "\uB871\uD328"
   - spellName: Uwae
     variations:
     - "\uC6B0\uC560"
+    - "\uBB50\uD574"
+    - "\uC65C"
   similarityThreshold: 2
   projectilePrefab: {fileID: 6670577681840426803, guid: 08102fe7341039749ba6745378055670, type: 3}
   shootForce: 12
