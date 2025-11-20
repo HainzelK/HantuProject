@@ -895,22 +895,21 @@ MonoBehaviour:
   spells:
   - spellName: Lette
     variations:
-    - "\uB987\uB760 "
-    - "\uB974\uB5BC "
-    - Lete
     - "\uB808\uD14C"
-  similarityThreshold: 5
+    - "\uB974\uB5BC"
+  - spellName: Lompo
+    variations:
+    - "\uB871\uD328"
+  - spellName: Uwae
+    variations:
+    - "\uC6B0\uC560"
+  similarityThreshold: 2
   projectilePrefab: {fileID: 6670577681840426803, guid: 08102fe7341039749ba6745378055670, type: 3}
   shootForce: 12
   spawnOffset: 0.25
   projectileLifetime: 8
-  volumeThreshold: 0.05
-  silenceDurationThreshold: 0.5
-  checkInterval: 0.1
-  spectrogramModelAsset: {fileID: 5022602860645237092, guid: 796cb933e4bf57d4e8dffc01903e2758, type: 3}
-  encoderModelAsset: {fileID: 5022602860645237092, guid: 30f613f26271b7a4b9fb566622eda98b, type: 3}
-  decoderModelAsset: {fileID: 5022602860645237092, guid: ff287bc2d4fbb1e42a3e575dc29070cf, type: 3}
-  vocabJsonAsset: {fileID: 4900000, guid: fd28450449ef0b240b563505e1987c64, type: 3}
+  koreanAsrModelID: sherpa-onnx-zipformer-korean-2024-06-24
+  vadModelID: silero_vad_v5
 --- !u!1 &1800763663
 GameObject:
   m_ObjectHideFlags: 0

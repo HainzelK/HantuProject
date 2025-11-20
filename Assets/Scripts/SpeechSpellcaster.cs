@@ -1,13 +1,11 @@
 using UnityEngine;
-using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
-using Unity.InferenceEngine;
-using Newtonsoft.Json;
-#if UNITY_ANDROID
-using UnityEngine.Android;
-#endif
+using Eitan.SherpaOnnxUnity.Runtime;
+using Eitan.SherpaOnnxUnity.Samples;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
+// Kelas Spell tetap sama
 [System.Serializable]
 public class Spell
 {
@@ -19,7 +17,8 @@ public class SpeechSpellcaster : MonoBehaviour
 {
     [Header("Pengaturan Mantra")]
     [SerializeField] private Spell[] spells;
-    [SerializeField] private int similarityThreshold = 2;
+    [Tooltip("Maksimal 'kesalahan' yang diizinkan saat mencocokkan kata. 0 = persis, 1 = satu huruf salah, dst.")]
+    [SerializeField] private int similarityThreshold = 1;
 
     [Header("Pengaturan Proyektil")]
     public GameObject projectilePrefab;
@@ -27,189 +26,226 @@ public class SpeechSpellcaster : MonoBehaviour
     public float spawnOffset = 0.25f;
     public float projectileLifetime = 8f;
 
-    [Header("Deteksi Suara Kontinu")]
-    [SerializeField, Range(0.01f, 1f)] private float volumeThreshold = 0.05f;
-    [SerializeField] private float silenceDurationThreshold = 1.5f;
-    [SerializeField] private float checkInterval = 0.1f;
+    [Header("Konfigurasi Model")]
+    [SerializeField]
+    private string koreanAsrModelID = "sherpa-onnx-zipformer-ctc-ko-int8-2024-05-02";
+    [SerializeField]
+    private string vadModelID = "silero-vad";
 
-    [Header("Model Inference Engine")]
-    [SerializeField] private ModelAsset spectrogramModelAsset;
-    [SerializeField] private ModelAsset encoderModelAsset;
-    [SerializeField] private ModelAsset decoderModelAsset;
-    [SerializeField] private TextAsset vocabJsonAsset;
-
-    private Worker spectrogramWorker, encoderWorker, decoderWorker;
-    private Dictionary<int, string> tokens;
-    private bool isEngineReady = false;
-    private bool isCurrentlyTranscribing = false;
-
-    private AudioClip recordingClip;
-    private List<float> currentSpeechSamples = new List<float>();
-    private bool isListeningForSpeech = false;
-    private float silenceTimer = 0;
-    private int lastSamplePosition = 0;
-    private const int RECORDING_BUFFER_SECONDS = 10;
+    private SpeechRecognition speechRecognizer;
+    private VoiceActivityDetection vad;
+    private Mic.Device microphoneDevice;
     private const int SAMPLE_RATE = 16000;
-    private const int WHISPER_EXPECTED_SAMPLES = 30 * SAMPLE_RATE;
-    private const int VOCAB_SIZE = 51865;
+    private bool isTranscribing = false;
+
+    // BARU: Variabel untuk komunikasi antar thread
+    private Spell _spellToCast = null;
+    private volatile bool _isSpellActionPending = false; // 'volatile' untuk keamanan thread
 
     private void Start()
     {
-        StartCoroutine(InitializeAndStart());
+        InitializeSystems();
     }
 
-    private IEnumerator InitializeAndStart()
+    // BARU: Tambahkan fungsi Update() yang berjalan di Main Thread
+    private void Update()
     {
-#if UNITY_ANDROID
-    if (!Permission.HasUserAuthorizedPermission(Permission.Microphone))
-    {
-        Permission.RequestUserPermission(Permission.Microphone);
-        
-        float timeout = 0f;
-        while (!Permission.HasUserAuthorizedPermission(Permission.Microphone) && timeout < 10f)
+        // Periksa setiap frame apakah ada aksi mantra yang menunggu untuk dieksekusi
+        if (_isSpellActionPending)
         {
-            yield return null;
-            timeout += Time.unscaledDeltaTime;
+            // Karena ini di dalam Update(), kita berada di Main Thread
+            OnSpellAction(_spellToCast);
+
+            // Reset flag setelah aksi selesai
+            _spellToCast = null;
+            _isSpellActionPending = false;
         }
     }
-#endif
 
-        if (Permission.HasUserAuthorizedPermission(Permission.Microphone))
+    private void InitializeSystems()
+    {
+        speechRecognizer = new SpeechRecognition(koreanAsrModelID, SAMPLE_RATE);
+        Debug.Log($"Model Speech Recognition Korea '{koreanAsrModelID}' berhasil dimuat.");
+
+        vad = new VoiceActivityDetection(vadModelID, SAMPLE_RATE);
+        vad.OnSpeechSegmentDetected += HandleSpeechSegmentDetected;
+        Debug.Log("VAD berhasil diinisialisasi dan siap mendeteksi ucapan.");
+
+        StartRecording();
+        Debug.Log("Sistem siap. Silakan ucapkan mantra dalam Bahasa Korea...");
+    }
+
+    private void StartRecording()
+    {
+        if (!Mic.Initialized) Mic.Init();
+        var devices = Mic.AvailableDevices;
+        if (devices.Count > 0)
         {
-            Debug.Log("Izin mikrofon telah diberikan! Memulai aplikasi...");
-            LoadInferenceEngine();
-            recordingClip = Microphone.Start(null, true, RECORDING_BUFFER_SECONDS, SAMPLE_RATE);
-            if (recordingClip == null)
-            {
-                Debug.LogError("GAGAL MEMULAI MIKROFON! recordingClip == null");
-                yield break; // ✅ DIPERBAIKI DI SINI
-            }
-            Debug.Log("Mulai mendengarkan mantra secara terus-menerus...");
-            StartCoroutine(ContinuousDetectionLoop());
+            microphoneDevice = devices[0];
+            microphoneDevice.OnFrameCollected += HandleAudioFrameCollected;
+            microphoneDevice.StartRecording(SAMPLE_RATE, 10);
+            Debug.Log($"Mulai merekam dengan device: {microphoneDevice.Name}");
         }
         else
         {
-            Debug.LogError("Izin mikrofon tidak diberikan!");
-            yield break; // ✅ Opsional: tambahkan ini juga untuk konsistensi
+            Debug.LogError("Tidak ada mikrofon yang ditemukan!");
         }
     }
 
-    private void LoadInferenceEngine()
+    private void HandleAudioFrameCollected(int sampleRate, int channelCount, float[] pcm)
     {
-        var spectrogramModel = ModelLoader.Load(spectrogramModelAsset);
-        var encoderModel = ModelLoader.Load(encoderModelAsset);
-        var decoderModel = ModelLoader.Load(decoderModelAsset);
-
-        spectrogramWorker = new Worker(spectrogramModel, BackendType.GPUCompute);
-        encoderWorker = new Worker(encoderModel, BackendType.GPUCompute);
-        decoderWorker = new Worker(decoderModel, BackendType.GPUCompute);
-
-        var vocab = JsonConvert.DeserializeObject<Dictionary<string, int>>(vocabJsonAsset.text);
-        tokens = vocab.ToDictionary(kvp => kvp.Value, kvp => kvp.Key);
-
-        isEngineReady = true;
-        Debug.Log("Inference Engine berhasil dimuat dan siap.");
+        vad?.StreamDetect(pcm);
     }
 
-    private IEnumerator ContinuousDetectionLoop()
+    private void HandleSpeechSegmentDetected(float[] speechSegment)
     {
-        while (true)
+        if (isTranscribing) return;
+        if (speechSegment == null || speechSegment.Length < SAMPLE_RATE * 0.2f) return;
+
+        Debug.Log($"[VAD]: Ucapan terdeteksi ({speechSegment.Length} sampel). Memulai transkripsi...");
+        _ = TranscribeAndCheckSpellsAsync(speechSegment);
+    }
+
+    private async Task TranscribeAndCheckSpellsAsync(float[] audioData)
+    {
+        isTranscribing = true;
+        try
         {
-            if (isCurrentlyTranscribing || !isEngineReady) { yield return new WaitForSeconds(checkInterval); continue; }
-            int currentPosition = Microphone.GetPosition(null);
-            if (currentPosition != lastSamplePosition) { ProcessAudioChunk(currentPosition); lastSamplePosition = currentPosition; }
-            if (isListeningForSpeech) { silenceTimer += checkInterval; if (silenceTimer >= silenceDurationThreshold) { FinalizeAndTranscribeSpeech(); } }
-            yield return new WaitForSeconds(checkInterval);
-        }
-    }
-
-    private void ProcessAudioChunk(int currentPosition)
-    {
-        int length = 0;
-        if (currentPosition < lastSamplePosition) length = (RECORDING_BUFFER_SECONDS * SAMPLE_RATE) - lastSamplePosition + currentPosition;
-        else length = currentPosition - lastSamplePosition;
-        if (length == 0) return;
-        float[] chunkData = new float[length];
-        recordingClip.GetData(chunkData, lastSamplePosition);
-        if (chunkData.Max(Mathf.Abs) > volumeThreshold) { if (!isListeningForSpeech) { isListeningForSpeech = true; Debug.Log("Suara terdeteksi..."); } currentSpeechSamples.AddRange(chunkData); silenceTimer = 0; }
-    }
-
-    private void FinalizeAndTranscribeSpeech()
-    {
-        isListeningForSpeech = false;
-        if (currentSpeechSamples.Count == 0) return;
-        isCurrentlyTranscribing = true;
-        Debug.Log($"Ucapan selesai. Memproses {currentSpeechSamples.Count} sampel...");
-        float[] speechData = currentSpeechSamples.ToArray();
-        currentSpeechSamples.Clear();
-        StartCoroutine(TranscribeAudio(speechData));
-    }
-
-    private IEnumerator TranscribeAudio(float[] audioData)
-    {
-        var paddedAudio = new float[WHISPER_EXPECTED_SAMPLES];
-        System.Array.Copy(audioData, paddedAudio, audioData.Length);
-        using var inputTensor = new Tensor<float>(new TensorShape(1, WHISPER_EXPECTED_SAMPLES), paddedAudio);
-
-        spectrogramWorker.Schedule(inputTensor);
-        var spectrogramTensor = spectrogramWorker.PeekOutput() as Tensor<float>;
-        yield return new WaitForEndOfFrame();
-
-        encoderWorker.Schedule(spectrogramTensor);
-        var encodedTensor = encoderWorker.PeekOutput() as Tensor<float>;
-        yield return new WaitForEndOfFrame();
-
-        var outputTokens = new List<int> { tokens.FirstOrDefault(t => t.Value == "<|startoftranscript|>").Key, tokens.FirstOrDefault(t => t.Value == "<|notimestamps|>").Key };
-        string transcribedText = "";
-
-        for (int i = 0; i < 100; i++)
-        {
-            using var tokensTensor = new Tensor<int>(new TensorShape(1, outputTokens.Count), outputTokens.ToArray());
-
-            decoderWorker.SetInput("encoder_hidden_states", encodedTensor);
-            decoderWorker.SetInput("input_ids", tokensTensor);
-            decoderWorker.Schedule();
-
-            var outputTensor = decoderWorker.PeekOutput().ReadbackAndClone() as Tensor<float>;
-
-            int lastTokenIndex = outputTokens.Count - 1;
-            int nextTokenId = 0;
-            float maxProb = float.MinValue;
-
-            for (int j = 0; j < VOCAB_SIZE; j++)
+            string transcribedText = await speechRecognizer.SpeechTranscriptionAsync(audioData, SAMPLE_RATE);
+            Debug.Log($"[Hasil Transkripsi]: '{transcribedText}'");
+            if (!string.IsNullOrWhiteSpace(transcribedText))
             {
-                if (outputTensor[0, lastTokenIndex, j] > maxProb)
+                FindBestMatchInTranscription(transcribedText);
+            }
+        }
+        catch (System.Exception ex)
+        {
+            // DIUBAH: Kita tidak bisa memanggil Debug.LogError dari background thread, jadi kita akan menanganinya dengan cara yang aman
+            Debug.LogWarning($"[ERROR DI BACKGROUND THREAD]: {ex.Message}\n{ex.StackTrace}");
+        }
+        finally
+        {
+            isTranscribing = false;
+        }
+    }
+
+    private void FindBestMatchInTranscription(string transcribedText)
+    {
+        // 1. Pecah kalimat menjadi kata-kata
+        string[] transcribedWords = transcribedText.Trim().Split(' ');
+
+        Spell bestOverallSpell = null;
+        int bestOverallDistance = int.MaxValue;
+
+        // 2. Iterasi melalui setiap mantra yang kita miliki (Lette, Uwae, dll.)
+        foreach (Spell spell in spells)
+        {
+            int bestDistanceForThisSpell = int.MaxValue;
+
+            // 3. Cari jarak terdekat untuk MANTRA INI dari semua kata yang ditranskripsi
+            foreach (string variation in spell.variations)
+            {
+                string cleanVariation = variation.Trim();
+                foreach (string word in transcribedWords)
                 {
-                    maxProb = outputTensor[0, lastTokenIndex, j];
-                    nextTokenId = j;
+                    int currentDistance = LevenshteinDistance(word, cleanVariation);
+                    if (currentDistance < bestDistanceForThisSpell)
+                    {
+                        bestDistanceForThisSpell = currentDistance;
+                    }
                 }
             }
 
-            outputTensor.Dispose();
-
-            if (tokens.ContainsKey(nextTokenId) && tokens[nextTokenId] == "<|endoftext|>") break;
-
-            outputTokens.Add(nextTokenId);
-            if (tokens.ContainsKey(nextTokenId)) transcribedText += tokens[nextTokenId];
-
-            yield return new WaitForEndOfFrame();
+            // 4. Setelah memeriksa semua variasi untuk mantra ini,
+            // kita sekarang punya jarak terbaiknya. Bandingkan dengan juara bertahan.
+            // Jika jarak untuk mantra ini lebih baik, ia menjadi juara baru.
+            if (bestDistanceForThisSpell < bestOverallDistance)
+            {
+                bestOverallDistance = bestDistanceForThisSpell;
+                bestOverallSpell = spell;
+            }
         }
 
-        Debug.Log($"Transkripsi Selesai: {transcribedText}");
-        CheckForKeywords(transcribedText.Replace("<|startoftranscript|>", "").Replace("<|notimestamps|>", "").Trim());
+        // 5. Setelah semua mantra "bersaing", kita lihat siapa pemenangnya
+        // dan apakah skornya cukup bagus (di bawah threshold).
+        if (bestOverallSpell != null && bestOverallDistance <= similarityThreshold)
+        {
+            Debug.Log($"Pemenang Kompetisi Mantra: '{bestOverallSpell.spellName}', Jarak: {bestOverallDistance} (Threshold: {similarityThreshold})");
 
-        isCurrentlyTranscribing = false;
+            // PENTING: Set flag untuk dieksekusi oleh Main Thread
+            _spellToCast = bestOverallSpell;
+            _isSpellActionPending = true;
+        }
+        else
+        {
+            Debug.Log($"Tidak ada mantra yang cocok ditemukan. Pemenang: '{bestOverallSpell?.spellName}', Jarak: {bestOverallDistance} (Threshold: {similarityThreshold})");
+        }
+    }
+
+    private void OnSpellAction(Spell detectedSpell)
+    {
+        Debug.Log($"MANTRA '{detectedSpell.spellName}' TERDETEKSI! Menjalankan aksi...");
+        switch (detectedSpell.spellName)
+        {
+            case "Lette":
+                TryShoot();
+                break;
+            default:
+                Debug.LogWarning($"Mantra '{detectedSpell.spellName}' tidak memiliki aksi yang ditentukan.");
+                break;
+        }
+    }
+
+    void TryShoot()
+    {
+        // Fungsi ini sekarang 100% aman karena dipanggil dari Update()
+        if (projectilePrefab == null) return;
+        Transform cam = Camera.main.transform;
+        Vector3 spawnPos = cam.TransformPoint(Vector3.forward * spawnOffset);
+        Quaternion spawnRot = cam.rotation;
+        GameObject proj = Instantiate(projectilePrefab, spawnPos, spawnRot);
+        Rigidbody rb = proj.GetComponent<Rigidbody>() ?? proj.AddComponent<Rigidbody>();
+        rb.useGravity = false;
+        rb.AddForce(cam.forward * shootForce, ForceMode.Impulse);
+        Destroy(proj, projectileLifetime);
+        Debug.Log($"[SpeechSpellcaster] Menembakkan proyektil.");
     }
 
     private void OnDestroy()
     {
-        spectrogramWorker?.Dispose();
-        encoderWorker?.Dispose();
-        decoderWorker?.Dispose();
+        if (microphoneDevice != null)
+        {
+            microphoneDevice.StopRecording();
+            microphoneDevice.OnFrameCollected -= HandleAudioFrameCollected;
+        }
+        if (speechRecognizer != null) speechRecognizer.Dispose();
+        if (vad != null)
+        {
+            vad.OnSpeechSegmentDetected -= HandleSpeechSegmentDetected;
+            vad.Dispose();
+        }
     }
 
-    private void CheckForKeywords(string transcribedText) { if (string.IsNullOrWhiteSpace(transcribedText)) return; string lowercasedText = transcribedText.ToLower().Trim(); Spell overallBestSpell = null; int overallMinDistance = int.MaxValue; foreach (Spell spell in spells) { foreach (string variation in spell.variations) { int distance = LevenshteinDistance(lowercasedText, variation.ToLower().Trim()); if (distance < overallMinDistance) { overallMinDistance = distance; overallBestSpell = spell; } } } if (overallBestSpell != null && overallMinDistance <= similarityThreshold) { Debug.Log($"MANTRA TERDETEKSI: {overallBestSpell.spellName} (Hasil asli: {transcribedText})"); OnKeywordDetected(overallBestSpell); } else { Debug.Log($"Tidak ada mantra yang cocok. Hasil asli: {transcribedText}"); } }
-    private void OnKeywordDetected(Spell detectedSpell) { Debug.Log($"MANTRA '{detectedSpell.spellName}' TERDETEKSI! Menjalankan aksi..."); switch (detectedSpell.spellName) { case "Lette": case "Api": case "uae": TryShoot(); break; default: Debug.LogWarning($"Mantra '{detectedSpell.spellName}' tidak memiliki aksi yang ditentukan."); break; } }
-    void TryShoot() { if (projectilePrefab == null) { Debug.LogError("[SpeechSpellcaster] projectilePrefab BELUM di-assign!"); return; } Transform cam = transform; Vector3 spawnPos = cam.TransformPoint(Vector3.forward * spawnOffset); Quaternion spawnRot = cam.rotation; GameObject proj = Instantiate(projectilePrefab, spawnPos, spawnRot); Rigidbody rb = proj.GetComponent<Rigidbody>() ?? proj.AddComponent<Rigidbody>(); rb.useGravity = false; Collider col = proj.GetComponent<Collider>() ?? proj.AddComponent<SphereCollider>(); rb.linearVelocity = Vector3.zero; rb.AddForce(cam.forward * shootForce, ForceMode.Impulse); Destroy(proj, projectileLifetime); Debug.Log("[SpeechSpellcaster] Menembakkan proyektil."); }
-    public static int LevenshteinDistance(string s, string t) { s = s ?? ""; t = t ?? ""; int n = s.Length; int m = t.Length; int[,] d = new int[n + 1, m + 1]; if (n == 0) return m; if (m == 0) return n; for (int i = 0; i <= n; d[i, 0] = i++) ; for (int j = 0; j <= m; d[0, j] = j++) ; for (int i = 1; i <= n; i++) { for (int j = 1; j <= m; j++) { int cost = (t[j - 1] == s[i - 1]) ? 0 : 1; d[i, j] = Mathf.Min(Mathf.Min(d[i - 1, j] + 1, d[i, j - 1] + 1), d[i - 1, j - 1] + cost); } } return d[n, m]; }
+    public static int LevenshteinDistance(string s, string t)
+    {
+        s = s.ToLower();
+        t = t.ToLower();
+        int n = s.Length;
+        int m = t.Length;
+        int[,] d = new int[n + 1, m + 1];
+        if (n == 0) return m;
+        if (m == 0) return n;
+        for (int i = 0; i <= n; d[i, 0] = i++) ;
+        for (int j = 0; j <= m; d[0, j] = j++) ;
+        for (int i = 1; i <= n; i++)
+        {
+            for (int j = 1; j <= m; j++)
+            {
+                int cost = (t[j - 1] == s[i - 1]) ? 0 : 1;
+                d[i, j] = Mathf.Min(Mathf.Min(d[i - 1, j] + 1, d[i, j - 1] + 1), d[i - 1, j - 1] + cost);
+            }
+        }
+        return d[n, m];
+    }
+
 }
