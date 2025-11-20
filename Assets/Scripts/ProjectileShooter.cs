@@ -8,41 +8,17 @@ public class ProjectileShooter : MonoBehaviour
     public float spawnOffset = 0.25f; // meters in front of camera
     public float projectileLifetime = 8f;
 
-    void Update()
-    {
-        // Support both touch (mobile) and mouse (editor)
-        if (IsTap())
-        {
-            TryShoot();
-        }
-    }
-
-    bool IsTap()
-    {
-        // Mobile: detect first touch began
-        if (Input.touchCount > 0)
-        {
-            Touch t = Input.GetTouch(0);
-            if (t.phase == TouchPhase.Began) return true;
-        }
-
-        // Editor / standalone: left mouse button down
-        #if UNITY_EDITOR || UNITY_STANDALONE
-        if (Input.GetMouseButtonDown(0)) return true;
-        #endif
-
-        return false;
-    }
-
-    void TryShoot()
+    /// <summary>
+    /// Called ONLY by SpellManager when a spell card is clicked.
+    /// </summary>
+    public void TryShoot(string spellName = "Unknown")
     {
         if (projectilePrefab == null)
         {
-            Debug.LogError("[ProjectileShooterEnhanced] projectilePrefab is NOT assigned!");
+            Debug.LogError("[ProjectileShooter] projectilePrefab is NOT assigned!");
             return;
         }
 
-        // Spawn position and rotation from camera
         Transform cam = transform;
         Vector3 spawnPos = cam.TransformPoint(Vector3.forward * spawnOffset);
         Quaternion spawnRot = cam.rotation;
@@ -50,36 +26,38 @@ public class ProjectileShooter : MonoBehaviour
         GameObject proj = Instantiate(projectilePrefab, spawnPos, spawnRot);
         if (proj == null)
         {
-            Debug.LogError("[ProjectileShooterEnhanced] Instantiate returned null!");
+            Debug.LogError("[ProjectileShooter] Instantiate returned null!");
             return;
         }
 
-        // Ensure it has a Rigidbody
+        // Ensure Rigidbody
         Rigidbody rb = proj.GetComponent<Rigidbody>();
         if (rb == null)
         {
             rb = proj.AddComponent<Rigidbody>();
-            rb.useGravity = false; // default to no gravity for AR projectile
         }
+        rb.useGravity = false;
+        rb.linearVelocity = cam.forward * shootForce;
 
-        // Ensure it has a Collider
-        Collider col = proj.GetComponent<Collider>();
-        if (col == null)
+        // Ensure Collider
+        if (proj.GetComponent<Collider>() == null)
         {
             SphereCollider sc = proj.AddComponent<SphereCollider>();
-            sc.radius = 0.5f;
+            sc.radius = 0.15f;
         }
 
-        // Apply force
-        rb.linearVelocity = Vector3.zero;
-        rb.AddForce(cam.forward * shootForce, ForceMode.Impulse);
-
-        // Optional: tag for collision script (if you rely on tag checks)
-        // proj.tag = "Projectile";
-
-        // auto destroy
+        // Auto-destroy
         Destroy(proj, projectileLifetime);
 
-        Debug.Log("[ProjectileShooterEnhanced] Spawned projectile at " + spawnPos);
+        // 🔥 Debug: Map spell name to element
+        string spellType = spellName switch
+        {
+            "Spell 1" => "Fire",
+            "Spell 2" => "Water",
+            "Spell 3" => "Thunder",
+            _ => "Unknown"
+        };
+
+        Debug.Log($"[SPELL CAST] {spellName} → {spellType} projectile fired!");
     }
 }

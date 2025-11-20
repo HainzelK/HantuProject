@@ -11,6 +11,8 @@ public class WaveManager : MonoBehaviour
     public TMP_Text waveText;
     public TMP_Text killText;
 
+    public SpellManager spellManager;
+
     public float spawnDistance = 2.5f;
     public float heightOffset = 0f;
     public float spawnInterval = 3f;
@@ -101,13 +103,29 @@ public class WaveManager : MonoBehaviour
         }
     }
 
-    void CompleteWave()
+void CompleteWave()
+{
+    isWaveActive = false;
+    Debug.Log($"\n=== WAVE {waveNumber} COMPLETED ===");
+
+    // ✅ Unlock Spell 3 ONLY after Wave 1
+    if (waveNumber == 1)
     {
-        isWaveActive = false;
-        Debug.Log($"\n=== WAVE {waveNumber} COMPLETED ===");
-        waveNumber++;
-        StartCoroutine(DelayedStartWave(1f));
+        Debug.Log("Wave 1 complete — attempting to unlock Spell 3");
+        if (spellManager != null)
+        {
+            Debug.Log("SpellManager found — calling UnlockSpell");
+            spellManager.UnlockSpell("Spell 3");
+        }
+        else
+        {
+            Debug.LogError("SpellManager is NULL! Did you assign it in Inspector?");
+        }
     }
+
+    waveNumber++;
+    StartCoroutine(DelayedStartWave(1f));
+}
 
     IEnumerator DelayedStartWave(float delay)
     {
