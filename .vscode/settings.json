@@ -67,5 +67,5 @@
         "*.sln": "*.csproj",
         "*.slnx": "*.csproj"
     },
-    "dotnet.defaultSolution": "HantuProject.slnx"
+    "dotnet.defaultSolution": "HantuProject-BudayaGO.slnx"
 }
