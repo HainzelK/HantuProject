@@ -11,9 +11,12 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Scenes/tesSpawning.unity
     guid: ccabf10669b72fe4c9842c83958b5560
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/tesFps.unity
     guid: 67712772fc5a5694a8a44a0e3a6d06db
+  - enabled: 1
+    path: Assets/Scenes/tesSpellNoVoice.unity
+    guid: 1af5fbe2d0bc8a146964bad3bb6d7529
   m_configObjects:
     UnityEditor.XR.ARCore.ARCoreSettings: {fileID: 11400000, guid: b477a6dcf9b2a2a49be57f483a392851, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
