@@ -7,27 +7,26 @@ using System.Collections.Generic;
 public class SpellManager : MonoBehaviour
 {
     [Header("References")]
-    public ProjectileShooter projectileShooter; // your existing shooter
-    public Transform playerCamera; // usually AR Camera
+    public ProjectileShooter projectileShooter;
+    public Transform playerCamera;
 
     [Header("UI to Hide During Popup")]
-public GameObject[] uiToHide; // drag spell panel, wave text, kill text, etc.
+    public GameObject[] uiToHide;
 
     [Header("UI")]
-    public GameObject spellPanel; // panel containing spell cards
-    public GameObject spellCardPrefab; // UI button with image & text
-    public GameObject unlockPopup; // shown when new spell unlocked
+    public GameObject spellPanel;
+    public GameObject spellCardPrefab;
+    public GameObject unlockPopup;
     public TextMeshProUGUI unlockText;
 
     [Header("Spells")]
     public List<string> unlockedSpells = new List<string> { "Spell 1", "Spell 2" };
-    private List<string> currentHand = new List<string>();
+    private List<string> currentHand = new List<string>(); // ✅ DECLARED HERE
 
-    private int maxHandSize = 2;
+    private int maxHandSize = 3; // ← changed to 3
 
     void Start()
     {
-        // Start with 2 random spells from unlocked pool
         RefillHand();
         UpdateSpellUI();
         HideUnlockPopup();
@@ -42,29 +41,24 @@ public GameObject[] uiToHide; // drag spell panel, wave text, kill text, etc.
         }
     }
 
-void ShowUnlockPopup(string spellName)
-{
-    unlockText.text = $"New Spell Unlocked!\n{spellName}";
-    
-    // Hide other UI
-    foreach (var ui in uiToHide)
+    void ShowUnlockPopup(string spellName)
     {
-        if (ui != null) ui.SetActive(false);
+        unlockText.text = $"New Spell Unlocked!\n{spellName}";
+        foreach (var ui in uiToHide)
+        {
+            if (ui != null) ui.SetActive(false);
+        }
+        unlockPopup.SetActive(true);
     }
-    
-    unlockPopup.SetActive(true);
-}
 
-public void OnCloseUnlockPopup()
-{
-    unlockPopup.SetActive(false);
-    
-    // Re-show other UI
-    foreach (var ui in uiToHide)
+    public void OnCloseUnlockPopup()
     {
-        if (ui != null) ui.SetActive(true);
+        unlockPopup.SetActive(false);
+        foreach (var ui in uiToHide)
+        {
+            if (ui != null) ui.SetActive(true);
+        }
     }
-}
 
     void RefillHand()
     {
@@ -83,46 +77,40 @@ public void OnCloseUnlockPopup()
 
     void UpdateSpellUI()
     {
-        // Clear existing cards
         foreach (Transform child in spellPanel.transform)
         {
             Destroy(child.gameObject);
         }
 
-        // Create new cards
- foreach (string spell in currentHand)
-{
-    // ✅ Create a local copy of 'spell' for the lambda
-    string spellName = spell;
-    GameObject card = Instantiate(spellCardPrefab, spellPanel.transform);
-    card.GetComponentInChildren<TextMeshProUGUI>().text = spellName;
-    Button btn = card.GetComponent<Button>();
-    btn.onClick.AddListener(() => OnSpellClicked(spellName, card)); // ✅ NOW CORRECT
-}
+        foreach (string spell in currentHand)
+        {
+            string spellName = spell;
+            GameObject card = Instantiate(spellCardPrefab, spellPanel.transform);
+            card.GetComponentInChildren<TextMeshProUGUI>().text = spellName;
+            Button btn = card.GetComponent<Button>();
+            btn.onClick.AddListener(() => OnSpellClicked(spellName));
+        }
     }
 
-void OnSpellClicked(string spellName, GameObject card)
-{
-    Debug.Log($"Player selected: {spellName}");
-
-    // Fire projectile WITH spell name for debug
-    if (projectileShooter != null)
+    void OnSpellClicked(string spellName)
     {
-        projectileShooter.TryShoot(spellName); // 👈 pass name
-    }
+        Debug.Log($"Player selected: {spellName}");
+        if (projectileShooter != null)
+        {
+            projectileShooter.TryShoot(spellName);
+        }
 
-    // Replace card
-    int index = currentHand.IndexOf(spellName);
-    if (index >= 0)
-    {
-        currentHand[index] = GetRandomUnlockedSpell();
-        UpdateSpellUI();
+        int index = currentHand.IndexOf(spellName);
+        if (index >= 0)
+        {
+            currentHand[index] = GetRandomUnlockedSpell();
+            UpdateSpellUI();
+        }
     }
-}
 
     void HideUnlockPopup()
-{
-    if (unlockPopup != null)
-        unlockPopup.SetActive(false);
-}
+    {
+        if (unlockPopup != null)
+            unlockPopup.SetActive(false);
+    }
 }
