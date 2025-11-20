@@ -41,24 +41,34 @@ public class SpellManager : MonoBehaviour
         }
     }
 
-    void ShowUnlockPopup(string spellName)
+void ShowUnlockPopup(string spellName)
+{
+    unlockText.text = $"New Spell Unlocked!\n{spellName}";
+    
+    // Hide other UI
+    foreach (var ui in uiToHide)
     {
-        unlockText.text = $"New Spell Unlocked!\n{spellName}";
-        foreach (var ui in uiToHide)
-        {
-            if (ui != null) ui.SetActive(false);
-        }
-        unlockPopup.SetActive(true);
+        if (ui != null) ui.SetActive(false);
     }
+    
+    // ✅ PAUSE THE GAME
+    Time.timeScale = 0f;
+    unlockPopup.SetActive(true);
+}
 
-    public void OnCloseUnlockPopup()
+public void OnCloseUnlockPopup()
+{
+    unlockPopup.SetActive(false);
+    
+    // Re-show other UI
+    foreach (var ui in uiToHide)
     {
-        unlockPopup.SetActive(false);
-        foreach (var ui in uiToHide)
-        {
-            if (ui != null) ui.SetActive(true);
-        }
+        if (ui != null) ui.SetActive(true);
     }
+    
+    // ✅ RESUME THE GAME
+    Time.timeScale = 1f;
+}
 
     void RefillHand()
     {
