@@ -11,6 +11,7 @@ public class WaveManager : MonoBehaviour
     public TMP_Text waveText;
     public TMP_Text killText;
 
+    public EnemyIndicatorManager enemyIndicatorManager; // Assign in Inspector
     public SpellManager spellManager;
 
     public float spawnDistance = 2.5f;
@@ -62,30 +63,50 @@ public class WaveManager : MonoBehaviour
         }
     }
 
-    void SpawnCube360()
+void SpawnCube360()
+{
+    if (playerTarget == null) return;
+
+    float angle = Random.Range(0f, 360f);
+    Vector3 dir = Quaternion.Euler(0f, angle, 0f) * Vector3.forward;
+    Vector3 spawnPos = playerTarget.position + dir * spawnDistance + Vector3.up * heightOffset;
+
+    GameObject cube = Instantiate(cubePrefab, spawnPos, Quaternion.identity);
+    cube.name = $"Enemy_W{waveNumber}_T{Time.frameCount}";
+
+    // Setup CubeMover
+    CubeMover mover = cube.GetComponent<CubeMover>();
+    if (mover != null)
     {
-        if (playerTarget == null) return;
-
-        float angle = Random.Range(0f, 360f);
-        Vector3 dir = Quaternion.Euler(0f, angle, 0f) * Vector3.forward;
-        Vector3 spawnPos = playerTarget.position + dir * spawnDistance + Vector3.up * heightOffset;
-
-        GameObject cube = Instantiate(cubePrefab, spawnPos, Quaternion.identity);
-        cube.name = $"Enemy_W{waveNumber}_T{Time.frameCount}";
-
-        CubeMover mover = cube.GetComponent<CubeMover>();
-        if (mover != null) mover.target = playerTarget;
-
-        CubeTracker tracker = cube.GetComponent<CubeTracker>();
-        if (tracker != null)
-        {
-            tracker.Initialize(this);
-        }
-        else
-        {
-            Debug.LogError($"{cube.name} — CubeTracker MISSING on prefab!");
-        }
+        mover.target = playerTarget;
     }
+    else
+    {
+        Debug.LogWarning($"[Spawn] {cube.name} missing CubeMover!", cube);
+    }
+
+    // Setup CubeTracker
+    CubeTracker tracker = cube.GetComponent<CubeTracker>();
+    if (tracker != null)
+    {
+        tracker.Initialize(this);
+    }
+    else
+    {
+        Debug.LogError($"[Spawn] {cube.name} missing CubeTracker! Add to prefab.", cube);
+    }
+
+    // ✅ Register with EnemyIndicatorManager (if available)
+    if (enemyIndicatorManager != null)
+    {
+        enemyIndicatorManager.RegisterEnemy(cube);
+    }
+    else if (enemyIndicatorManager == null && waveNumber == 1)
+    {
+        // Only warn once (first wave) to avoid spam
+        Debug.LogWarning("[Spawn] EnemyIndicatorManager not assigned! Indicators disabled.");
+    }
+}
 
     public void RegisterKill()
     {
