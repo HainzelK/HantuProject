@@ -2,57 +2,85 @@ using UnityEngine;
 
 public class ProjectileCollision : MonoBehaviour
 {
-void OnCollisionEnter(Collision collision)
-{
-    if (collision.gameObject.CompareTag("Cube"))
-    {
-        Debug.Log("Projectile hit cube — KILL!");
+    public float damage = 50f;
 
-        CubeTracker tracker = collision.gameObject.GetComponent<CubeTracker>();
+    void OnCollisionEnter(Collision collision)
+    {
+        // 🔥 Check if hit object is the MAIN CAMERA (player)
+        if (collision.gameObject.CompareTag("MainCamera"))
+        {
+            PlayerHealth.Instance?.TakeDamage(damage);
+            Destroy(gameObject);
+            return;
+        }
+
+        // Handle enemy cubes
+        if (collision.gameObject.CompareTag("Cube"))
+        {
+            Debug.Log("Projectile hit cube!");
+
+            EnemyHealth enemyHealth = collision.gameObject.GetComponent<EnemyHealth>();
+            if (enemyHealth != null)
+            {
+                enemyHealth.TakeDamage(damage);
+                
+                if (enemyHealth.CurrentHealth <= 0)
+                {
+                    HandleEnemyDeath(collision.gameObject);
+                }
+            }
+            else
+            {
+                HandleEnemyDeath(collision.gameObject);
+            }
+
+            Destroy(gameObject);
+        }
+    }
+
+    void HandleEnemyDeath(GameObject enemy)
+    {
+        if (enemy == null) return;
+
+        CubeTracker tracker = enemy.GetComponent<CubeTracker>();
         if (tracker != null)
         {
-            // ✅ Mark as killed by projectile
             tracker.killedByProjectile = true;
 
             if (tracker.waveManager != null)
             {
-                // ✅ Unregister from enemy indicators BEFORE destroying
                 if (tracker.waveManager.enemyIndicatorManager != null)
                 {
-                    tracker.waveManager.enemyIndicatorManager.UnregisterEnemy(collision.gameObject);
+                    tracker.waveManager.enemyIndicatorManager.UnregisterEnemy(enemy);
                 }
-
                 tracker.waveManager.RegisterKill();
-                Debug.Log("RegisterKill successfully called!");
+                Debug.Log("Enemy killed! RegisterKill called.");
             }
             else
             {
-                Debug.LogError("WaveManager reference missing on CubeTracker!"); 
-                Debug.LogError($"Cube name: {collision.gameObject.name}");
+                Debug.LogError("WaveManager reference missing on CubeTracker!");
+                Debug.LogError($"Cube name: {enemy.name}");
                 
-                // ✅ Still unregister if possible (fallback)
                 var indicatorMgr = FindObjectOfType<EnemyIndicatorManager>();
                 if (indicatorMgr != null)
                 {
-                    indicatorMgr.UnregisterEnemy(collision.gameObject);
+                    indicatorMgr.UnregisterEnemy(enemy);
                 }
             }
         }
         else
         {
             Debug.LogError("CubeTracker component missing on cube!");
-            
-            // ✅ Fallback unregistration
             var indicatorMgr = FindObjectOfType<EnemyIndicatorManager>();
             if (indicatorMgr != null)
             {
-                indicatorMgr.UnregisterEnemy(collision.gameObject);
+                indicatorMgr.UnregisterEnemy(enemy);
             }
         }
 
-        // ✅ Destroy cube and projectile
-        Destroy(collision.gameObject);
-        Destroy(gameObject);
+        if (enemy.GetComponent<EnemyHealth>() == null)
+        {
+            Destroy(enemy);
+        }
     }
-}
 }
