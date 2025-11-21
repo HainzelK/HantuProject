@@ -899,15 +899,22 @@ MonoBehaviour:
     - "\uB974\uB5BC"
     - "\uB80C\uD2B8"
     - "\uC5B4\uB54C"
+    - "\uB291\uB300"
+    - "\uB124"
   - spellName: Lompo
     variations:
     - "\uB871\uD328"
+    - "\uB86C\uBCF5"
+    - "\uBB50 \uC74C \uBB50 \uBB50"
+    - "\uB7FC\uBCF4"
   - spellName: Uwae
     variations:
     - "\uC6B0\uC560"
     - "\uBB50\uD574"
     - "\uC65C"
-  similarityThreshold: 2
+    - "5\uC6D4"
+    - "\uC624\uC640\uC774"
+    - "\uBAA8\uC544\uC774"
   projectilePrefab: {fileID: 6670577681840426803, guid: 08102fe7341039749ba6745378055670, type: 3}
   shootForce: 12
   spawnOffset: 0.25
