@@ -48,6 +48,9 @@ public class CubeMover : MonoBehaviour
             {
                 reachedPlayer = true;
                 Debug.Log("Cube reached player — NOT counting as kill");
+                
+                // ✅ Apply damage when reaching player
+                PlayerHealth.Instance?.TakeDamage(20f);
             }
 
             if (destroyOnReach)
@@ -60,5 +63,20 @@ public class CubeMover : MonoBehaviour
     public bool HasReachedPlayer()
     {
         return reachedPlayer;
+    }
+
+    void OnTriggerEnter(Collider other) 
+    {
+        // If cube reaches player (AR Camera)
+        if (other.CompareTag("MainCamera"))
+        {
+            Debug.Log("Cube hit player via trigger!");
+            
+            // ✅ Damage player (fallback if Update() didn't trigger)
+            PlayerHealth.Instance?.TakeDamage(20f);
+            
+            // Optional: destroy cube on hit
+            Destroy(gameObject);
+        }
     }
 }
