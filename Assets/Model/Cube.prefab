@@ -157,4 +157,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maxHealth: 100
-  enemyHpBarPrefab: {fileID: 6524255570471375744, guid: 1c824ab0c49862a4490d335208e7a127, type: 3}
+  enemyHpBarPrefab: {fileID: 6524255570471375744, guid: d6862844f32bf8e449caf63227e40b10, type: 3}

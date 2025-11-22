@@ -1,87 +1,115 @@
-// EnemyHealth.cs
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class EnemyHealth : MonoBehaviour
 {
-    public float maxHealth = 100f; // Set per wave in WaveManager
-    public float currentHealth { get; private set; }
-    public float CurrentHealth => currentHealth; // Public getter
+    public float maxHealth = 100f;
+    private float currentHealth;
+    public float CurrentHealth => currentHealth;
 
-    [Header("HP Bar")]
     public GameObject enemyHpBarPrefab;
     private Image fillImage;
+    private GameObject hpBarInstance; // Track bar instance
 
     void Start()
     {
         currentHealth = maxHealth;
+        Debug.Log($"[EnemyHealth] {name} initialized with HP: {currentHealth}");
         if (enemyHpBarPrefab != null)
         {
             CreateHpBar();
         }
-    }
-
-    void CreateHpBar()
-    {
-        GameObject bar = Instantiate(enemyHpBarPrefab);
-        bar.transform.localScale = Vector3.one;
-        bar.transform.SetParent(null); // World space
-
-        fillImage = bar.transform.Find("Fill")?.GetComponent<Image>();
-        if (fillImage != null)
-        {
-            UpdateHpBar();
-            StartCoroutine(UpdatePosition(bar));
-        }
         else
         {
-            Destroy(bar);
+            Debug.LogError($"[EnemyHealth] MISSING HP BAR PREFAB on {name}!");
         }
     }
 
-    IEnumerator UpdatePosition(GameObject bar)
+void CreateHpBar()
+{
+    // 🔥 STEP 1: CREATE A SIMPLE RED CUBE (no prefab)
+    GameObject debugBar = new GameObject("DEBUG_HP_BAR");
+    debugBar.transform.localScale = Vector3.one * 0.2f; // Visible size
+    
+    // Add renderer
+    MeshFilter mf = debugBar.AddComponent<MeshFilter>();
+    mf.mesh = Mesh.Instantiate(Resources.GetBuiltinResource<Mesh>("Cube.fbx"));
+    MeshRenderer mr = debugBar.AddComponent<MeshRenderer>();
+    mr.material = new Material(Shader.Find("Standard"));
+    mr.material.color = Color.red;
+
+    // 🔥 STEP 2: PLACE IT DIRECTLY ABOVE ENEMY (WORLD SPACE)
+    debugBar.transform.position = transform.position + Vector3.up * 2.0f;
+    
+    // 🔥 STEP 3: KEEP IT ALIVE
+    DontDestroyOnLoad(debugBar);
+    
+    Debug.Log($"[DEBUG] Created RED CUBE at {debugBar.transform.position} for {name}");
+}
+    // Helper to list child names
+    string[] GetChildNames(GameObject obj)
     {
-        while (bar != null && gameObject.activeInHierarchy)
+        var names = new System.Collections.Generic.List<string>();
+        foreach (Transform child in obj.transform)
+        {
+            names.Add(child.name);
+        }
+        return names.ToArray();
+    }
+
+    IEnumerator UpdatePosition()
+    {
+        Debug.Log($"[EnemyHealth] Starting HP bar position loop for {name}");
+        int frameCount = 0;
+        
+        while (hpBarInstance != null && gameObject.activeInHierarchy)
         {
             if (Camera.main != null)
             {
                 Vector3 worldPos = transform.position + Vector3.up * 1.5f;
-                bar.transform.position = Camera.main.WorldToScreenPoint(worldPos);
+                Vector3 screenPos = Camera.main.WorldToScreenPoint(worldPos);
+                hpBarInstance.transform.position = screenPos;
+                
+                if (frameCount < 3) // Log first 3 frames
+                {
+                    Debug.Log($"[EnemyHealth] Frame {frameCount}: {name} HP bar at {screenPos} (world: {worldPos})");
+                    frameCount++;
+                }
+            }
+            else
+            {
+                Debug.LogWarning("[EnemyHealth] Camera.main is NULL!");
             }
             yield return null;
         }
-        if (bar != null) Destroy(bar);
+        
+        Debug.Log($"[EnemyHealth] HP bar loop ended for {name}");
+        if (hpBarInstance != null) Destroy(hpBarInstance);
     }
 
     public void TakeDamage(float amount)
     {
         currentHealth = Mathf.Clamp(currentHealth - amount, 0, maxHealth);
+        Debug.Log($"[EnemyHealth] {name} took {amount} damage → HP: {currentHealth}");
         UpdateHpBar();
-        
-        if (currentHealth <= 0)
-        {
-            Die();
-        }
+        if (currentHealth <= 0) Die();
     }
 
     void UpdateHpBar()
     {
         if (fillImage != null)
         {
-            fillImage.fillAmount = currentHealth / maxHealth;
+            float fillAmount = currentHealth / maxHealth;
+            fillImage.fillAmount = fillAmount;
+            Debug.Log($"[EnemyHealth] {name} HP fill set to {fillAmount:P0}");
         }
     }
 
     void Die()
     {
-        // Notify WaveManager via CubeTracker
-        CubeTracker tracker = GetComponent<CubeTracker>();
-        if (tracker?.waveManager != null && tracker.killedByProjectile)
-        {
-            tracker.waveManager.RegisterKill();
-        }
-        
+        Debug.Log($"[EnemyHealth] {name} DIED!");
+        if (hpBarInstance != null) Destroy(hpBarInstance);
         Destroy(gameObject);
     }
 }
