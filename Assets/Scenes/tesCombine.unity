@@ -1843,6 +1843,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   projectileShooter: {fileID: 1678815543}
   playerCamera: {fileID: 1678815536}
+  speechSpellcaster: {fileID: 1678815546}
   uiToHide: []
   spellPanel: {fileID: 2107163317}
   spellCardPrefab: {fileID: 3323988079175377717, guid: 316a759a83d4e4b4caaa87e57e4441bd, type: 3}
@@ -1852,7 +1853,6 @@ MonoBehaviour:
   - Uwae
   - Lette
   requireVoiceMatch: 1
-  currentSelectedSpell: 
 --- !u!4 &1848135152
 Transform:
   m_ObjectHideFlags: 0
