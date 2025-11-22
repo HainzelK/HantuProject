@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 3004659866777188372}
   - component: {fileID: -3347814700001141613}
   - component: {fileID: 4309954120884504691}
-  - component: {fileID: 5950845039916091209}
+  - component: {fileID: 5231129821550423543}
   m_Layer: 0
   m_Name: Cube
   m_TagString: Cube
@@ -144,7 +144,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   waveManager: {fileID: 0}
   killedByProjectile: 0
---- !u!114 &5950845039916091209
+--- !u!114 &5231129821550423543
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -153,13 +153,8 @@ MonoBehaviour:
   m_GameObject: {fileID: 8428577008010722953}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e770b3946e970cb4cb5e323b68c1e6cd, type: 3}
+  m_Script: {fileID: 11500000, guid: 02d48815b0a680640b133d9eff687f75, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   maxHealth: 100
-  OnHealthChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  OnDied:
-    m_PersistentCalls:
-      m_Calls: []
+  enemyHpBarPrefab: {fileID: 6524255570471375744, guid: 1c824ab0c49862a4490d335208e7a127, type: 3}
