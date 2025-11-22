@@ -18,18 +18,13 @@ public class SpeechSpellcaster : MonoBehaviour
     [Header("Spell Settings")]
     [SerializeField] private Spell[] spells;
 
-    [Header("Projectile")]
-    public GameObject projectilePrefab;
-    public float shootForce = 12f;
-    public float spawnOffset = 0.25f;
-    public float projectileLifetime = 8f;
-
     [Header("Model Config")]
     [SerializeField] private string koreanAsrModelID = "sherpa-onnx-zipformer-korean-2024-06-24";
     [SerializeField] private string vadModelID = "silero_vad_v5";
 
     private SpeechRecognition speechRecognizer;
     private VoiceActivityDetection vad;
+    private ProjectileShooter projectileShooter;
 
     private AudioClip micClip;
     private const int SAMPLE_RATE = 16000;
@@ -37,9 +32,13 @@ public class SpeechSpellcaster : MonoBehaviour
     private bool isTranscribing = false;
     private Spell _spellToCast = null;
     private bool _isSpellActionPending = false;
-    
+
     void Start()
     {
+        projectileShooter = GetComponent<ProjectileShooter>();
+        if (projectileShooter == null)
+            Debug.LogError("ProjectileShooter tidak ditemukan! Tambahkan script ProjectileShooter ke kamera!");
+
         StartCoroutine(Init());
     }
 
@@ -169,24 +168,7 @@ public class SpeechSpellcaster : MonoBehaviour
     // ===============================================
     void OnSpellAction(Spell s)
     {
-        if (s.spellName == "Lette")
-            TryShoot();
-    }
-
-    void TryShoot()
-    {
-        Transform cam = Camera.main.transform;
-
-        Vector3 pos = cam.TransformPoint(Vector3.forward * spawnOffset);
-        Quaternion rot = cam.rotation;
-
-        GameObject proj = Instantiate(projectilePrefab, pos, rot);
-
-        Rigidbody rb = proj.GetComponent<Rigidbody>() ?? proj.AddComponent<Rigidbody>();
-        rb.useGravity = false;
-        rb.AddForce(cam.forward * shootForce, ForceMode.Impulse);
-
-        Destroy(proj, projectileLifetime);
+        projectileShooter.TryShoot(s.spellName);
     }
 
     // ===============================================
@@ -216,53 +198,5 @@ public class SpeechSpellcaster : MonoBehaviour
         Microphone.End(null);
         vad?.Dispose();
         speechRecognizer?.Dispose();
-    }
-}
-
-// ===============================================
-//   HANGUL DECOMPOSER
-// ===============================================
-public static class HangulJamo
-{
-    private const int Base = 0xAC00;
-
-    private static readonly char[] initials =
-    {
-        'ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'
-    };
-
-    private static readonly char[] vowels =
-    {
-        'ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ','ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ'
-    };
-
-    private static readonly char[] finals =
-    {
-        '\0','ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'
-    };
-
-    public struct JamoTriple
-    {
-        public char initial, vowel, finalJ;
-    }
-
-    public static List<JamoTriple> Decompose(string text)
-    {
-        List<JamoTriple> list = new List<JamoTriple>();
-
-        foreach (char c in text)
-        {
-            if (c < Base || c > 0xD7A3) continue;
-
-            int code = c - Base;
-            list.Add(new JamoTriple
-            {
-                initial = initials[code / (21 * 28)],
-                vowel = vowels[(code % (21 * 28)) / 28],
-                finalJ = finals[code % 28]
-            });
-        }
-
-        return list;
     }
 }
