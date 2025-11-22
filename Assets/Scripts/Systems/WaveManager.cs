@@ -18,6 +18,10 @@ public class WaveManager : MonoBehaviour
     public float heightOffset = 0f;
     public float spawnInterval = 3f;
 
+    [Header("Enemy HP")]
+    public float baseEnemyHp = 100f;
+    public float hpPerWave = 30f;
+
     // ✅ NEW: How many kills needed to complete a wave?
     public int killsPerWave = 5;
 
@@ -65,6 +69,8 @@ public class WaveManager : MonoBehaviour
 
 void SpawnCube360()
 {
+
+    
     if (playerTarget == null) return;
 
     float angle = Random.Range(0f, 360f);
@@ -96,6 +102,22 @@ void SpawnCube360()
         Debug.LogError($"[Spawn] {cube.name} missing CubeTracker! Add to prefab.", cube);
     }
 
+    // ✅ Setup EnemyHealth with wave-based HP
+    
+    EnemyHealth enemyHealth = cube.GetComponent<EnemyHealth>();
+
+    enemyHealth.maxHealth = baseEnemyHp + (waveNumber - 1) * hpPerWave;
+    if (enemyHealth != null)
+    {
+        // 🔥 Set HP based on wave number (example: +30 HP per wave)
+        enemyHealth.maxHealth = 100f + (waveNumber - 1) * 30f;
+        // HP will be initialized in EnemyHealth.Start()
+    }
+    else
+    {
+        Debug.LogWarning($"[Spawn] {cube.name} missing EnemyHealth component!", cube);
+    }
+
     // ✅ Register with EnemyIndicatorManager (if available)
     if (enemyIndicatorManager != null)
     {
@@ -103,11 +125,9 @@ void SpawnCube360()
     }
     else if (enemyIndicatorManager == null && waveNumber == 1)
     {
-        // Only warn once (first wave) to avoid spam
         Debug.LogWarning("[Spawn] EnemyIndicatorManager not assigned! Indicators disabled.");
     }
 }
-
     public void RegisterKill()
     {
         if (!isWaveActive) return; // Ignore kills between waves
