@@ -28,35 +28,71 @@ public class EnemyHealth : MonoBehaviour
 
 void CreateHpBar()
 {
-    // 🔥 STEP 1: CREATE A SIMPLE RED CUBE (no prefab)
-    GameObject debugBar = new GameObject("DEBUG_HP_BAR");
-    debugBar.transform.localScale = Vector3.one * 0.2f; // Visible size
+    Debug.Log($"[HP] STARTING CreateHpBar for {name}");
     
-    // Add renderer
-    MeshFilter mf = debugBar.AddComponent<MeshFilter>();
-    mf.mesh = Mesh.Instantiate(Resources.GetBuiltinResource<Mesh>("Cube.fbx"));
-    MeshRenderer mr = debugBar.AddComponent<MeshRenderer>();
-    mr.material = new Material(Shader.Find("Standard"));
-    mr.material.color = Color.red;
-
-    // 🔥 STEP 2: PLACE IT DIRECTLY ABOVE ENEMY (WORLD SPACE)
-    debugBar.transform.position = transform.position + Vector3.up * 2.0f;
-    
-    // 🔥 STEP 3: KEEP IT ALIVE
-    DontDestroyOnLoad(debugBar);
-    
-    Debug.Log($"[DEBUG] Created RED CUBE at {debugBar.transform.position} for {name}");
-}
-    // Helper to list child names
-    string[] GetChildNames(GameObject obj)
+    if (enemyHpBarPrefab == null)
     {
-        var names = new System.Collections.Generic.List<string>();
-        foreach (Transform child in obj.transform)
-        {
-            names.Add(child.name);
-        }
-        return names.ToArray();
+        Debug.LogError($"[HP] ❌ HP BAR PREFAB IS NULL on {name}!");
+        return;
     }
+
+    hpBarInstance = Instantiate(enemyHpBarPrefab);
+    
+    if (hpBarInstance == null)
+    {
+        Debug.LogError("[HP] ❌ INSTANTIATION FAILED!");
+        return;
+    }
+
+    // Log prefab structure
+    Debug.Log($"[HP] ✅ Instantiated HP bar: {hpBarInstance.name}");
+    Debug.Log($"[HP] Children in prefab: {string.Join(", ", GetChildNames(hpBarInstance))}");
+
+    hpBarInstance.transform.SetParent(null);
+    hpBarInstance.transform.localScale = Vector3.one;
+
+    // Find Fill
+    Transform fill = hpBarInstance.transform.Find("Fill");
+    if (fill == null)
+    {
+        Debug.LogError("[HP] ❌ 'Fill' NOT FOUND! Check prefab child names.");
+        Destroy(hpBarInstance);
+        return;
+    }
+
+    fillImage = fill.GetComponent<Image>();
+    if (fillImage == null)
+    {
+        Debug.LogError("[HP] ❌ 'Fill' has no Image component!");
+        Destroy(hpBarInstance);
+        return;
+    }
+
+    // Force visible color (override any material issues)
+    fillImage.color = Color.green;
+    Transform hpBg = hpBarInstance.transform.Find("HP");
+    if (hpBg != null)
+    {
+        Image bgImage = hpBg.GetComponent<Image>();
+        if (bgImage != null) bgImage.color = Color.red;
+    }
+
+    UpdateHpBar();
+    StartCoroutine(UpdatePosition());
+    Debug.Log($"[HP] ✅ HP bar fully created for {name}");
+}
+
+// Helper to list child names
+string[] GetChildNames(GameObject obj)
+{
+    var names = new System.Collections.Generic.List<string>();
+    foreach (Transform child in obj.transform)
+    {
+        names.Add(child.name);
+    }
+    return names.ToArray();
+}
+
 
     IEnumerator UpdatePosition()
     {
