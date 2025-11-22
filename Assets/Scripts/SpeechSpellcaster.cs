@@ -4,50 +4,61 @@ using Eitan.SherpaOnnxUnity.Runtime;
 using Eitan.SherpaOnnxUnity.Samples;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.IO;
 
-//
-// ===========================
-//   CLASS SPELL
-// ===========================
 [System.Serializable]
 public class Spell
 {
     public string spellName;
-    public List<string> variations;  // e.g. "레떼", "레테", "렛테"
+    public List<string> variations;
 }
 
-//
-// ===========================
-//   MAIN SCRIPT
-// ===========================
 public class SpeechSpellcaster : MonoBehaviour
 {
-    [Header("Pengaturan Mantra")]
+    [Header("Spell Settings")]
     [SerializeField] private Spell[] spells;
 
-    [Header("Pengaturan Proyektil")]
+    [Header("Projectile")]
     public GameObject projectilePrefab;
     public float shootForce = 12f;
     public float spawnOffset = 0.25f;
     public float projectileLifetime = 8f;
 
-    [Header("Konfigurasi Model")]
-    [SerializeField] private string koreanAsrModelID = "sherpa-onnx-zipformer-ctc-ko-int8-2024-05-02";
+    [Header("Model Config")]
+    [SerializeField] private string koreanAsrModelID = "sherpa-onnx-zipformer-korean-2024-06-24";
     [SerializeField] private string vadModelID = "silero_vad_v5";
 
     private SpeechRecognition speechRecognizer;
     private VoiceActivityDetection vad;
-    private Mic.Device microphoneDevice;
 
+    private AudioClip micClip;
     private const int SAMPLE_RATE = 16000;
+
     private bool isTranscribing = false;
-
     private Spell _spellToCast = null;
-    private volatile bool _isSpellActionPending = false;
-
+    private bool _isSpellActionPending = false;
+    
     void Start()
     {
-        InitializeSystems();
+        StartCoroutine(Init());
+    }
+
+    System.Collections.IEnumerator Init()
+    {
+        // Request microphone permission (Android)
+        if (!Application.HasUserAuthorization(UserAuthorization.Microphone))
+        {
+            yield return Application.RequestUserAuthorization(UserAuthorization.Microphone);
+        }
+
+        speechRecognizer = new SpeechRecognition(koreanAsrModelID, SAMPLE_RATE);
+        vad = new VoiceActivityDetection(vadModelID, SAMPLE_RATE);
+
+        vad.OnSpeechSegmentDetected += HandleSpeechDetected;
+
+        StartMic();
+
+        Debug.Log("System Ready.");
     }
 
     void Update()
@@ -60,65 +71,54 @@ public class SpeechSpellcaster : MonoBehaviour
         }
     }
 
-    private void InitializeSystems()
+    // ===============================================
+    //   Microphone Recorder (Universal)
+    // ===============================================
+    void StartMic()
     {
-        speechRecognizer = new SpeechRecognition(koreanAsrModelID, SAMPLE_RATE);
-        Debug.Log($"ASR Korea loaded: {koreanAsrModelID}");
+        if (micClip != null)
+            Microphone.End(null);
 
-        vad = new VoiceActivityDetection(vadModelID, SAMPLE_RATE);
-        vad.OnSpeechSegmentDetected += HandleSpeechSegmentDetected;
-        Debug.Log("VAD Ready (Silero v5)");
+        micClip = Microphone.Start(null, true, 1, SAMPLE_RATE);
 
-        StartRecording();
+        Debug.Log("[Mic] Start at 16kHz");
+        InvokeRepeating(nameof(PullMicFrames), 0.1f, 0.1f);
     }
 
-    private void StartRecording()
+    void PullMicFrames()
     {
-        if (!Mic.Initialized) Mic.Init();
+        if (micClip == null) return;
 
-        var devices = Mic.AvailableDevices;
-        if (devices.Count > 0)
-        {
-            microphoneDevice = devices[0];
-            microphoneDevice.OnFrameCollected += HandleAudioFrameCollected;
-            microphoneDevice.StartRecording(SAMPLE_RATE, 160);
-            Debug.Log($"Recording with mic: {microphoneDevice.Name}");
-        }
-        else
-        {
-            Debug.LogError("No microphone found!");
-        }
+        int pos = Microphone.GetPosition(null);
+        if (pos < SAMPLE_RATE / 10) return; // not enough samples
+
+        float[] buffer = new float[SAMPLE_RATE / 10];
+        micClip.GetData(buffer, pos - buffer.Length);
+
+        vad.StreamDetect(buffer);
     }
 
-    private void HandleAudioFrameCollected(int sampleRate, int channelCount, float[] pcm)
-    {
-        vad?.StreamDetect(pcm);
-    }
-
-    private void HandleSpeechSegmentDetected(float[] segment)
+    // ===============================================
+    //   VAD → ASR
+    // ===============================================
+    private void HandleSpeechDetected(float[] segment)
     {
         if (isTranscribing) return;
         if (segment == null || segment.Length < SAMPLE_RATE * 0.2f) return;
 
-        Debug.Log($"[VAD] Speech detected ({segment.Length} samples).");
-        _ = TranscribeAndCheckSpellsAsync(segment);
+        Debug.Log($"[VAD] speech ({segment.Length} samples)");
+        _ = Transcribe(segment);
     }
 
-    private async Task TranscribeAndCheckSpellsAsync(float[] audioData)
+    private async Task Transcribe(float[] pcm)
     {
         isTranscribing = true;
-
         try
         {
-            string text = await speechRecognizer.SpeechTranscriptionAsync(audioData, SAMPLE_RATE);
-            Debug.Log($"[ASR] => '{text}'");
-
-            if (!string.IsNullOrWhiteSpace(text))
-                FindBestMatchInTranscription(text);
-        }
-        catch (System.Exception ex)
-        {
-            Debug.LogWarning($"[ASR ERROR]: {ex.Message}");
+            string txt = await speechRecognizer.SpeechTranscriptionAsync(pcm, SAMPLE_RATE);
+            Debug.Log("[ASR] => " + txt);
+            if (!string.IsNullOrWhiteSpace(txt))
+                FindBestMatch(txt);
         }
         finally
         {
@@ -126,56 +126,72 @@ public class SpeechSpellcaster : MonoBehaviour
         }
     }
 
-    //
-    // ===========================
-    //   HANGUL JAMO FUZZY MATCH
-    // ===========================
-    //
-    private void FindBestMatchInTranscription(string transcribedText)
+    // ===============================================
+    //   SPELL MATCHING
+    // ===============================================
+    private void FindBestMatch(string text)
     {
-        string[] words = transcribedText.Trim().Split(' ');
+        string[] words = text.Trim().Split(' ');
 
         Spell bestSpell = null;
-        float bestScore = 0f;
+        float bestScore = 0;
 
-        foreach (Spell spell in spells)
+        foreach (Spell s in spells)
         {
-            foreach (string variation in spell.variations)
+            foreach (string v in s.variations)
             {
-                string cleanVar = variation.Trim();
-
                 foreach (string w in words)
                 {
-                    float score = HangulSimilarity(w, cleanVar);
-                    if (score > bestScore)
+                    float sc = HangulSimilarity(w, v);
+                    if (sc > bestScore)
                     {
-                        bestScore = score;
-                        bestSpell = spell;
+                        bestScore = sc;
+                        bestSpell = s;
                     }
                 }
             }
         }
 
-        const float THRESHOLD = 0.55f;
-
-        if (bestSpell != null && bestScore >= THRESHOLD)
+        if (bestSpell != null && bestScore >= 0.55f)
         {
-            Debug.Log($"[SPELL MATCH] {bestSpell.spellName} (Similarity={bestScore:F2})");
-
+            Debug.Log($"[SPELL] Match: {bestSpell.spellName}");
             _spellToCast = bestSpell;
             _isSpellActionPending = true;
         }
         else
         {
-            Debug.Log($"[NO MATCH] Highest similarity={bestScore:F2}");
+            Debug.Log($"[Spell] No match (best={bestScore:0.00})");
         }
     }
 
-    //
-    // ===========================
-    //   HANGUL DECOMPOSER
-    // ===========================
-    //
+    // ===============================================
+    //   DO SPELL
+    // ===============================================
+    void OnSpellAction(Spell s)
+    {
+        if (s.spellName == "Lette")
+            TryShoot();
+    }
+
+    void TryShoot()
+    {
+        Transform cam = Camera.main.transform;
+
+        Vector3 pos = cam.TransformPoint(Vector3.forward * spawnOffset);
+        Quaternion rot = cam.rotation;
+
+        GameObject proj = Instantiate(projectilePrefab, pos, rot);
+
+        Rigidbody rb = proj.GetComponent<Rigidbody>() ?? proj.AddComponent<Rigidbody>();
+        rb.useGravity = false;
+        rb.AddForce(cam.forward * shootForce, ForceMode.Impulse);
+
+        Destroy(proj, projectileLifetime);
+    }
+
+    // ===============================================
+    //   HANGUL MATCH CORE
+    // ===============================================
     public static float HangulSimilarity(string a, string b)
     {
         var A = HangulJamo.Decompose(a);
@@ -184,78 +200,31 @@ public class SpeechSpellcaster : MonoBehaviour
         int len = Mathf.Min(A.Count, B.Count);
         if (len == 0) return 0f;
 
-        float total = 0f;
-
+        float t = 0f;
         for (int i = 0; i < len; i++)
         {
-            if (A[i].initial == B[i].initial) total += 0.5f;
-            if (A[i].vowel == B[i].vowel) total += 0.3f;
-            if (A[i].finalJ == B[i].finalJ) total += 0.2f;
+            if (A[i].initial == B[i].initial) t += 0.5f;
+            if (A[i].vowel == B[i].vowel) t += 0.3f;
+            if (A[i].finalJ == B[i].finalJ) t += 0.2f;
         }
 
-        return total / len;
+        return t / len;
     }
 
-
-    //
-    // ===========================
-    //   SPELL ACTION
-    // ===========================
-    //
-    private void OnSpellAction(Spell detectedSpell)
+    void OnDestroy()
     {
-        Debug.Log($"Spell Detected → {detectedSpell.spellName}");
-
-        switch (detectedSpell.spellName)
-        {
-            case "Lette":
-                TryShoot();
-                break;
-
-            default:
-                Debug.LogWarning($"No action defined for spell '{detectedSpell.spellName}'");
-                break;
-        }
-    }
-
-    private void TryShoot()
-    {
-        if (projectilePrefab == null) return;
-
-        Transform cam = Camera.main.transform;
-        Vector3 spawnPos = cam.TransformPoint(Vector3.forward * spawnOffset);
-        Quaternion spawnRot = cam.rotation;
-
-        GameObject proj = Instantiate(projectilePrefab, spawnPos, spawnRot);
-        Rigidbody rb = proj.GetComponent<Rigidbody>() ?? proj.AddComponent<Rigidbody>();
-
-        rb.useGravity = false;
-        rb.AddForce(cam.forward * shootForce, ForceMode.Impulse);
-
-        Destroy(proj, projectileLifetime);
-        Debug.Log("Projectile fired!");
-    }
-
-    private void OnDestroy()
-    {
-        if (microphoneDevice != null)
-        {
-            microphoneDevice.StopRecording();
-            microphoneDevice.OnFrameCollected -= HandleAudioFrameCollected;
-        }
-
+        Microphone.End(null);
         vad?.Dispose();
         speechRecognizer?.Dispose();
     }
 }
 
-//
-// ===========================
-//   HANGUL JAMO DECOMPOSER
-// ===========================
+// ===============================================
+//   HANGUL DECOMPOSER
+// ===============================================
 public static class HangulJamo
 {
-    private const int BaseCode = 0xAC00;
+    private const int Base = 0xAC00;
 
     private static readonly char[] initials =
     {
@@ -274,30 +243,23 @@ public static class HangulJamo
 
     public struct JamoTriple
     {
-        public char initial;
-        public char vowel;
-        public char finalJ;
+        public char initial, vowel, finalJ;
     }
 
     public static List<JamoTriple> Decompose(string text)
     {
         List<JamoTriple> list = new List<JamoTriple>();
 
-        foreach (char ch in text)
+        foreach (char c in text)
         {
-            if (ch < BaseCode || ch > 0xD7A3)
-                continue;
+            if (c < Base || c > 0xD7A3) continue;
 
-            int code = ch - BaseCode;
-            int i = code / (21 * 28);
-            int v = (code % (21 * 28)) / 28;
-            int f = code % 28;
-
+            int code = c - Base;
             list.Add(new JamoTriple
             {
-                initial = initials[i],
-                vowel = vowels[v],
-                finalJ = finals[f]
+                initial = initials[code / (21 * 28)],
+                vowel = vowels[(code % (21 * 28)) / 28],
+                finalJ = finals[code % 28]
             });
         }
 
