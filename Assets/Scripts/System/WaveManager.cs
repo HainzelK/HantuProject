@@ -106,12 +106,10 @@ void SpawnCube360()
     
     EnemyHealth enemyHealth = cube.GetComponent<EnemyHealth>();
 
-    enemyHealth.maxHealth = baseEnemyHp + (waveNumber - 1) * hpPerWave;
     if (enemyHealth != null)
     {
-        // 🔥 Set HP based on wave number (example: +30 HP per wave)
-        enemyHealth.maxHealth = 100f + (waveNumber - 1) * 30f;
-        // HP will be initialized in EnemyHealth.Start()
+        // ✅ Only set maxHealth if component exists
+        enemyHealth.maxHealth = baseEnemyHp + (waveNumber - 1) * hpPerWave;
     }
     else
     {

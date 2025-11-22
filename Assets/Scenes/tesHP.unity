@@ -380,7 +380,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 105, y: -131}
+  m_AnchoredPosition: {x: 92, y: -335}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &471167484
@@ -468,7 +468,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: 0, y: 0, z: 0, w: 0}
+  m_margin: {x: 0, y: 0, z: 36.894592, w: 0}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_hasFontAssetChanged: 0
@@ -1072,6 +1072,7 @@ GameObject:
   - component: {fileID: 1678815537}
   - component: {fileID: 1678815542}
   - component: {fileID: 1678815543}
+  - component: {fileID: 1678815544}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -1347,6 +1348,20 @@ MonoBehaviour:
   shootForce: 10
   spawnOffset: 0.25
   projectileLifetime: 8
+--- !u!114 &1678815544
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1678815535}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6aa9c278fc9e0c445ab9673758f7eb2e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxHealth: 100
+  playerHpBarPrefab: {fileID: 6524255570471375744, guid: 1c824ab0c49862a4490d335208e7a127, type: 3}
 --- !u!1 &1791893941
 GameObject:
   m_ObjectHideFlags: 0
@@ -1433,6 +1448,8 @@ MonoBehaviour:
   spawnDistance: 13
   heightOffset: 0
   spawnInterval: 3
+  baseEnemyHp: 100
+  hpPerWave: 30
   killsPerWave: 5
 --- !u!4 &1800763665
 Transform:
@@ -1758,7 +1775,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 108, y: -290}
+  m_AnchoredPosition: {x: 96, y: -494.0001}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2104994749
