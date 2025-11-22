@@ -29,7 +29,6 @@ public class SpellManager : MonoBehaviour
 
 
     private int maxHandSize = 3; // ← changed to 3
-    private string _pendingSpellForReplacement = null; // spell yang nanti perlu diganti kartunya
 
     void Start()
     {

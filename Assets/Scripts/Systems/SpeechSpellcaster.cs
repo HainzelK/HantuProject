@@ -35,7 +35,7 @@ public class SpeechSpellcaster : MonoBehaviour
     private bool isTranscribing = false;
     private Spell _spellToCast = null;
     private bool _isSpellActionPending = false;
-
+    private bool _isListening = false; // apakah saat ini sedang mendengarkan?
     private string _pendingSpellName = null; // Spell name yang sedang menunggu ucapan
 
 
@@ -50,7 +50,6 @@ public class SpeechSpellcaster : MonoBehaviour
 
     System.Collections.IEnumerator Init()
     {
-        // Request microphone permission (Android)
         if (!Application.HasUserAuthorization(UserAuthorization.Microphone))
         {
             yield return Application.RequestUserAuthorization(UserAuthorization.Microphone);
@@ -58,14 +57,10 @@ public class SpeechSpellcaster : MonoBehaviour
 
         speechRecognizer = new SpeechRecognition(koreanAsrModelID, SAMPLE_RATE);
         vad = new VoiceActivityDetection(vadModelID, SAMPLE_RATE);
-
         vad.OnSpeechSegmentDetected += HandleSpeechDetected;
 
-        StartMic();
-
-        Debug.Log("System Ready.");
+        Debug.Log("Speech system initialized. Menunggu spell dipilih...");
     }
-
     void Update()
     {
         if (_isSpellActionPending)
@@ -79,15 +74,32 @@ public class SpeechSpellcaster : MonoBehaviour
     // ===============================================
     //   Microphone Recorder (Universal)
     // ===============================================
-    void StartMic()
+    void StartListening()
     {
+        if (_isListening) return;
+
         if (micClip != null)
             Microphone.End(null);
 
         micClip = Microphone.Start(null, true, 1, SAMPLE_RATE);
+        _isListening = true;
 
-        Debug.Log("[Mic] Start at 16kHz");
+        Debug.Log("[Mic] Mulai mendengarkan (16kHz)");
         InvokeRepeating(nameof(PullMicFrames), 0.1f, 0.1f);
+    }
+
+    void StopListening()
+    {
+        if (!_isListening) return;
+
+        CancelInvoke(nameof(PullMicFrames));
+        if (micClip != null)
+        {
+            Microphone.End(null);
+            micClip = null;
+        }
+        _isListening = false;
+        Debug.Log("[Mic] Berhenti mendengarkan.");
     }
 
     void PullMicFrames()
@@ -176,25 +188,27 @@ public class SpeechSpellcaster : MonoBehaviour
     {
         if (_pendingSpellName != null)
         {
-            // Mode verifikasi: hanya tembak jika cocok
             if (recognizedSpell.spellName == _pendingSpellName)
             {
-                Debug.Log($"[SUCCESS] Ucapan cocok dengan spell yang dipilih: {_pendingSpellName}");
+                Debug.Log($"[SUCCESS] Ucapan cocok: {_pendingSpellName}");
                 projectileShooter?.TryShoot(_pendingSpellName);
             }
             else
             {
-                Debug.Log($"[FAIL] Ucapan '{recognizedSpell.spellName}' tidak cocok dengan yang dipilih '{_pendingSpellName}'");
+                Debug.Log($"[FAIL] Ucapan '{recognizedSpell.spellName}' ≠ '{_pendingSpellName}'");
             }
-            _pendingSpellName = null; // Reset setelah diverifikasi
+
+            _pendingSpellName = null;
+            StopListening(); // 🛑 berhenti dengarkan setelah selesai
         }
         else
         {
-            // Mode langsung (fallback): tembak apapun yang dikenali
-            // (berguna jika nanti ada mode non-kartu, misalnya voice-only)
+            // Fallback: biasanya tidak terpakai di mode kartu
             projectileShooter?.TryShoot(recognizedSpell.spellName);
+            // Opsional: juga StopListening() di sini jika kamu pakai mode voice-only
         }
-    }    // ===============================================
+    }
+    // ===============================================
     //   HANGUL MATCH CORE
     // ===============================================
     public static float HangulSimilarity(string a, string b)
@@ -221,6 +235,7 @@ public class SpeechSpellcaster : MonoBehaviour
     {
         _pendingSpellName = spellName;
         Debug.Log($"[SpeechSpellcaster] Menunggu ucapan untuk spell: '{spellName}'");
+        StartListening(); // 🔊 mulai dengarkan
     }
 
     void OnDestroy()
