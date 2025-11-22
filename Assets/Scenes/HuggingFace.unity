@@ -166,6 +166,37 @@ MonoBehaviour:
   startButton: {fileID: 1976422452}
   stopButton: {fileID: 449144629}
   text: {fileID: 1983232157}
+  spells:
+  - spellName: Lette
+    variations:
+    - "\uB987\uB760"
+    - "\uB974\uB5BC"
+    - Lete
+    - "\uB808\uD14C"
+  - spellName: uae
+    variations:
+    - Wayne
+    - When
+    - Wow
+    - Wang
+    - Way
+    - "\uC6E8\uC778"
+    - "\uC640\uC778"
+    - "\uC640\uC5D0"
+    - "\uC640\uC789"
+    - "\u5582"
+    - Wah
+  - spellName: Api
+    variations:
+    - Api
+    - "A v\xEDm"
+  - spellName: Lompo
+    variations:
+    - Lompo
+    - Lompuh
+    - Lompok
+    - "\uB871\uBF40"
+  similarityThreshold: 2
 --- !u!1 &388261448
 GameObject:
   m_ObjectHideFlags: 0

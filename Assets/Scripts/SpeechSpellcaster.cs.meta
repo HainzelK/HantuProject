@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: d95c52b7436c0f94e9092465f28abd44
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - projectilePrefab: {instanceID: 0}
+  - spectrogramModelAsset: {instanceID: 0}
+  - encoderModelAsset: {fileID: 5022602860645237092, guid: 45f10dc26f292794a9a3a2ec749028a4, type: 3}
+  - decoderModelAsset: {fileID: 5022602860645237092, guid: a05a0377eb3a32c469c3202775146cff, type: 3}
+  - joinerModelAsset: {fileID: 5022602860645237092, guid: 12be88c4aa23b224eb5b64dc79abe81a, type: 3}
+  - tokensTxtAsset: {fileID: 4900000, guid: e2de26d5cbba5c5409ced4dc733644cd, type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
