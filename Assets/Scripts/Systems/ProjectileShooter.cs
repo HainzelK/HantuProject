@@ -8,6 +8,7 @@ public class ProjectileShooter : MonoBehaviour
     public float spawnOffset = 0.25f; // meters in front of camera
     public float projectileLifetime = 8f;
 
+    public System.Action<string> onSpellCast; // Event callback
     /// <summary>
     /// Called ONLY by SpellManager when a spell card is clicked.
     /// </summary>
@@ -46,6 +47,8 @@ public class ProjectileShooter : MonoBehaviour
 
         Destroy(proj, projectileLifetime);
 
+        onSpellCast?.Invoke(spellName);
+
         // Debug log
         string spellType = spellName switch
         {
@@ -55,6 +58,7 @@ public class ProjectileShooter : MonoBehaviour
             _ => "Unknown"
         };
         Debug.Log($"[SPELL CAST] {spellName} → {spellType} projectile fired!");
+        onSpellCast?.Invoke(spellName);
     }
 
     void SetProjectileColor(GameObject projectile, string spellName)
@@ -74,9 +78,7 @@ public class ProjectileShooter : MonoBehaviour
         Color spellColor = spellName switch
         {
             "Lette" => Color.yellow,           // ⚡ Thunder
-            "Spell 1" => Color.yellow,           // ⚡ Thunder
             "Uwae" => Color.blue,          // 💧 Water
-            "Spell 2" => Color.blue,          // 💧 Water
             "Spell 3" => Color.red,        // 🔥 Fire
             _ => Color.white
         };

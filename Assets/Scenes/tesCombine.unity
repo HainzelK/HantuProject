@@ -1494,7 +1494,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1678815535}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 783a27c8330c06b4497f0860ca528ea5, type: 3}
   m_Name: 
@@ -1554,7 +1554,23 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   spells:
   - spellName: Lette
-    variations: []
+    variations:
+    - "\uB808\uD14C"
+    - "\uB974\uB5BC"
+    - "\uB80C\uD2B8"
+    - "\uC5B4\uB54C"
+    - "\uB291\uB300"
+    - "\uB124"
+    - "\uC778\uB370"
+    - "\uB974\uC740\uB370"
+  - spellName: Uwae
+    variations:
+    - "\uC6B0\uC560"
+    - "\uBB50\uD574"
+    - "\uC65C"
+    - "5\uC6D4"
+    - "\uC624\uC640\uC774"
+    - "\uBAA8\uC544\uC774"
   koreanAsrModelID: sherpa-onnx-zipformer-korean-2024-06-24
   vadModelID: silero_vad_v5
 --- !u!1 &1791893941
@@ -1833,8 +1849,10 @@ MonoBehaviour:
   unlockPopup: {fileID: 996732602}
   unlockText: {fileID: 2132513981}
   unlockedSpells:
-  - Spell 1
-  - Spell 2
+  - Uwae
+  - Lette
+  requireVoiceMatch: 1
+  currentSelectedSpell: 
 --- !u!4 &1848135152
 Transform:
   m_ObjectHideFlags: 0

@@ -1,3 +1,4 @@
+// SpeechSpellcaster.cs
 using UnityEngine;
 using System.Linq;
 using Eitan.SherpaOnnxUnity.Runtime;
@@ -25,6 +26,8 @@ public class SpeechSpellcaster : MonoBehaviour
     private SpeechRecognition speechRecognizer;
     private VoiceActivityDetection vad;
     private ProjectileShooter projectileShooter;
+    private SpellManager spellManager;
+
 
     private AudioClip micClip;
     private const int SAMPLE_RATE = 16000;
@@ -32,6 +35,9 @@ public class SpeechSpellcaster : MonoBehaviour
     private bool isTranscribing = false;
     private Spell _spellToCast = null;
     private bool _isSpellActionPending = false;
+
+    private string _pendingSpellName = null; // Spell name yang sedang menunggu ucapan
+
 
     void Start()
     {
@@ -153,7 +159,7 @@ public class SpeechSpellcaster : MonoBehaviour
 
         if (bestSpell != null && bestScore >= 0.55f)
         {
-            Debug.Log($"[SPELL] Match: {bestSpell.spellName}");
+            Debug.Log($"[SPELL] ASR mengenali: {bestSpell.spellName}");
             _spellToCast = bestSpell;
             _isSpellActionPending = true;
         }
@@ -166,12 +172,29 @@ public class SpeechSpellcaster : MonoBehaviour
     // ===============================================
     //   DO SPELL
     // ===============================================
-    void OnSpellAction(Spell s)
+    void OnSpellAction(Spell recognizedSpell)
     {
-        projectileShooter.TryShoot(s.spellName);
-    }
-
-    // ===============================================
+        if (_pendingSpellName != null)
+        {
+            // Mode verifikasi: hanya tembak jika cocok
+            if (recognizedSpell.spellName == _pendingSpellName)
+            {
+                Debug.Log($"[SUCCESS] Ucapan cocok dengan spell yang dipilih: {_pendingSpellName}");
+                projectileShooter?.TryShoot(_pendingSpellName);
+            }
+            else
+            {
+                Debug.Log($"[FAIL] Ucapan '{recognizedSpell.spellName}' tidak cocok dengan yang dipilih '{_pendingSpellName}'");
+            }
+            _pendingSpellName = null; // Reset setelah diverifikasi
+        }
+        else
+        {
+            // Mode langsung (fallback): tembak apapun yang dikenali
+            // (berguna jika nanti ada mode non-kartu, misalnya voice-only)
+            projectileShooter?.TryShoot(recognizedSpell.spellName);
+        }
+    }    // ===============================================
     //   HANGUL MATCH CORE
     // ===============================================
     public static float HangulSimilarity(string a, string b)
@@ -191,6 +214,13 @@ public class SpeechSpellcaster : MonoBehaviour
         }
 
         return t / len;
+    }
+
+    // Tambahkan ini sebagai method publik
+    public void SetPendingSpell(string spellName)
+    {
+        _pendingSpellName = spellName;
+        Debug.Log($"[SpeechSpellcaster] Menunggu ucapan untuk spell: '{spellName}'");
     }
 
     void OnDestroy()

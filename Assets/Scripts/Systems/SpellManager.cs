@@ -9,6 +9,7 @@ public class SpellManager : MonoBehaviour
     [Header("References")]
     public ProjectileShooter projectileShooter;
     public Transform playerCamera;
+    public SpeechSpellcaster speechSpellcaster; // drag di inspector
 
     [Header("UI to Hide During Popup")]
     public GameObject[] uiToHide;
@@ -20,16 +21,25 @@ public class SpellManager : MonoBehaviour
     public TextMeshProUGUI unlockText;
 
     [Header("Spells")]
-    public List<string> unlockedSpells = new List<string> { "Spell 1", "Spell 2" };
+    public List<string> unlockedSpells = new List<string> { "Lette", "Uwae" };
     private List<string> currentHand = new List<string>(); // ✅ DECLARED HERE
 
+    [Header("Settings")]
+    public bool requireVoiceMatch = true;   // kalau true → harus ngomong, kalau false → langsung tembak
+
+
     private int maxHandSize = 3; // ← changed to 3
+    private string _pendingSpellForReplacement = null; // spell yang nanti perlu diganti kartunya
 
     void Start()
     {
         RefillHand();
         UpdateSpellUI();
         HideUnlockPopup();
+
+        // Subscribe ke event
+        if (projectileShooter != null)
+            projectileShooter.onSpellCast += OnSpellCastSuccess;
     }
 
     public void UnlockSpell(string spellName)
@@ -41,34 +51,34 @@ public class SpellManager : MonoBehaviour
         }
     }
 
-void ShowUnlockPopup(string spellName)
-{
-    unlockText.text = $"New Spell Unlocked!\n{spellName}";
-    
-    // Hide other UI
-    foreach (var ui in uiToHide)
+    void ShowUnlockPopup(string spellName)
     {
-        if (ui != null) ui.SetActive(false);
-    }
-    
-    // ✅ PAUSE THE GAME
-    Time.timeScale = 0f;
-    unlockPopup.SetActive(true);
-}
+        unlockText.text = $"New Spell Unlocked!\n{spellName}";
 
-public void OnCloseUnlockPopup()
-{
-    unlockPopup.SetActive(false);
-    
-    // Re-show other UI
-    foreach (var ui in uiToHide)
-    {
-        if (ui != null) ui.SetActive(true);
+        // Hide other UI
+        foreach (var ui in uiToHide)
+        {
+            if (ui != null) ui.SetActive(false);
+        }
+
+        // ✅ PAUSE THE GAME
+        Time.timeScale = 0f;
+        unlockPopup.SetActive(true);
     }
-    
-    // ✅ RESUME THE GAME
-    Time.timeScale = 1f;
-}
+
+    public void OnCloseUnlockPopup()
+    {
+        unlockPopup.SetActive(false);
+
+        // Re-show other UI
+        foreach (var ui in uiToHide)
+        {
+            if (ui != null) ui.SetActive(true);
+        }
+
+        // ✅ RESUME THE GAME
+        Time.timeScale = 1f;
+    }
 
     void RefillHand()
     {
@@ -81,7 +91,7 @@ public void OnCloseUnlockPopup()
 
     string GetRandomUnlockedSpell()
     {
-        if (unlockedSpells.Count == 0) return "Spell 1";
+        if (unlockedSpells.Count == 0) return "Lette";
         return unlockedSpells[Random.Range(0, unlockedSpells.Count)];
     }
 
@@ -104,12 +114,19 @@ public void OnCloseUnlockPopup()
 
     void OnSpellClicked(string spellName)
     {
-        Debug.Log($"Player selected: {spellName}");
-        if (projectileShooter != null)
+        if (requireVoiceMatch)
         {
-            projectileShooter.TryShoot(spellName);
+            speechSpellcaster?.SetPendingSpell(spellName);
         }
+        else
+        {
+            projectileShooter?.TryShoot(spellName);
+            // Ganti kartu via event onSpellCast (lihat langkah opsional di bawah)
+        }
+    }
 
+    void OnSpellCastSuccess(string spellName)
+    {
         int index = currentHand.IndexOf(spellName);
         if (index >= 0)
         {
