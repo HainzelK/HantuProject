@@ -12,10 +12,23 @@ public class EnemyHealth : MonoBehaviour
     private Image fillImage;
     private GameObject hpBarInstance; // Track bar instance
 
+    // 🔥 HIT FEEDBACK FIELDS
+    private Renderer cubeRenderer;
+    private Color originalColor;
+    public float hitFlashDuration = 0.25f; // ~15 frames at 60fps
+
     void Start()
     {
         currentHealth = maxHealth;
         Debug.Log($"[EnemyHealth] {name} initialized with HP: {currentHealth}");
+        
+        // 🔥 CACHE ORIGINAL CUBE COLOR
+        cubeRenderer = GetComponent<Renderer>();
+        if (cubeRenderer != null && cubeRenderer.material != null)
+        {
+            originalColor = cubeRenderer.material.color;
+        }
+        
         if (enemyHpBarPrefab != null)
         {
             CreateHpBar();
@@ -26,73 +39,72 @@ public class EnemyHealth : MonoBehaviour
         }
     }
 
-void CreateHpBar()
-{
-    Debug.Log($"[HP] STARTING CreateHpBar for {name}");
-    
-    if (enemyHpBarPrefab == null)
+    void CreateHpBar()
     {
-        Debug.LogError($"[HP] ❌ HP BAR PREFAB IS NULL on {name}!");
-        return;
+        Debug.Log($"[HP] STARTING CreateHpBar for {name}");
+        
+        if (enemyHpBarPrefab == null)
+        {
+            Debug.LogError($"[HP] ❌ HP BAR PREFAB IS NULL on {name}!");
+            return;
+        }
+
+        hpBarInstance = Instantiate(enemyHpBarPrefab);
+        
+        if (hpBarInstance == null)
+        {
+            Debug.LogError("[HP] ❌ INSTANTIATION FAILED!");
+            return;
+        }
+
+        // Log prefab structure
+        Debug.Log($"[HP] ✅ Instantiated HP bar: {hpBarInstance.name}");
+        Debug.Log($"[HP] Children in prefab: {string.Join(", ", GetChildNames(hpBarInstance))}");
+
+        hpBarInstance.transform.SetParent(null);
+        hpBarInstance.transform.localScale = Vector3.one;
+
+        // Find Fill
+        Transform fill = hpBarInstance.transform.Find("Fill");
+        if (fill == null)
+        {
+            Debug.LogError("[HP] ❌ 'Fill' NOT FOUND! Check prefab child names.");
+            Destroy(hpBarInstance);
+            return;
+        }
+
+        fillImage = fill.GetComponent<Image>();
+        if (fillImage == null)
+        {
+            Debug.LogError("[HP] ❌ 'Fill' has no Image component!");
+            Destroy(hpBarInstance);
+            return;
+        }
+
+        // Force visible color (override any material issues)
+        fillImage.color = Color.green;
+        Transform hpBg = hpBarInstance.transform.Find("HP");
+        if (hpBg != null)
+        {
+            Image bgImage = hpBg.GetComponent<Image>();
+            if (bgImage != null) bgImage.color = Color.red;
+        }
+
+        UpdateHpBar();
+        StartCoroutine(UpdatePosition());
+        Debug.Log($"[HP] ✅ HP bar fully created for {name}");
     }
 
-    hpBarInstance = Instantiate(enemyHpBarPrefab);
-    
-    if (hpBarInstance == null)
+    // Helper to list child names
+    string[] GetChildNames(GameObject obj)
     {
-        Debug.LogError("[HP] ❌ INSTANTIATION FAILED!");
-        return;
+        var names = new System.Collections.Generic.List<string>();
+        foreach (Transform child in obj.transform)
+        {
+            names.Add(child.name);
+        }
+        return names.ToArray();
     }
-
-    // Log prefab structure
-    Debug.Log($"[HP] ✅ Instantiated HP bar: {hpBarInstance.name}");
-    Debug.Log($"[HP] Children in prefab: {string.Join(", ", GetChildNames(hpBarInstance))}");
-
-    hpBarInstance.transform.SetParent(null);
-    hpBarInstance.transform.localScale = Vector3.one;
-
-    // Find Fill
-    Transform fill = hpBarInstance.transform.Find("Fill");
-    if (fill == null)
-    {
-        Debug.LogError("[HP] ❌ 'Fill' NOT FOUND! Check prefab child names.");
-        Destroy(hpBarInstance);
-        return;
-    }
-
-    fillImage = fill.GetComponent<Image>();
-    if (fillImage == null)
-    {
-        Debug.LogError("[HP] ❌ 'Fill' has no Image component!");
-        Destroy(hpBarInstance);
-        return;
-    }
-
-    // Force visible color (override any material issues)
-    fillImage.color = Color.green;
-    Transform hpBg = hpBarInstance.transform.Find("HP");
-    if (hpBg != null)
-    {
-        Image bgImage = hpBg.GetComponent<Image>();
-        if (bgImage != null) bgImage.color = Color.red;
-    }
-
-    UpdateHpBar();
-    StartCoroutine(UpdatePosition());
-    Debug.Log($"[HP] ✅ HP bar fully created for {name}");
-}
-
-// Helper to list child names
-string[] GetChildNames(GameObject obj)
-{
-    var names = new System.Collections.Generic.List<string>();
-    foreach (Transform child in obj.transform)
-    {
-        names.Add(child.name);
-    }
-    return names.ToArray();
-}
-
 
     IEnumerator UpdatePosition()
     {
@@ -128,8 +140,30 @@ string[] GetChildNames(GameObject obj)
     {
         currentHealth = Mathf.Clamp(currentHealth - amount, 0, maxHealth);
         Debug.Log($"[EnemyHealth] {name} took {amount} damage → HP: {currentHealth}");
+        
+        // 🔥 TRIGGER HIT FEEDBACK
+        StartCoroutine(HitFlash());
+        
         UpdateHpBar();
         if (currentHealth <= 0) Die();
+    }
+
+    // 🔥 HIT FEEDBACK COROUTINE
+    IEnumerator HitFlash()
+    {
+        if (cubeRenderer == null) yield break;
+        
+        // Change to red
+        cubeRenderer.material.color = Color.red;
+        
+        // Wait for duration
+        yield return new WaitForSeconds(hitFlashDuration);
+        
+        // Revert to original color
+        if (cubeRenderer.material != null)
+        {
+            cubeRenderer.material.color = originalColor;
+        }
     }
 
     void UpdateHpBar()
