@@ -1554,6 +1554,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   spells:
+  - spellName: Api
+    variations:
+    - "\uC544\uD53C"
+    - "\uC544\uBE44"
+    - "\uC544\uC090"
+    - "\uC704"
+    - "\uC811\uC774"
+    - "\uCEE4\uD53C"
   - spellName: Lette
     variations:
     - "\uB808\uD14C"
@@ -1564,14 +1572,30 @@ MonoBehaviour:
     - "\uB124"
     - "\uC778\uB370"
     - "\uB974\uC740\uB370"
+    - "\uADF8\uB798"
+    - "\uB86F\uB370"
+    - "\uB54C"
+    - "\uBA87 \uC5D0"
+    - "\uB7A9?"
   - spellName: Uwae
     variations:
     - "\uC6B0\uC560"
     - "\uBB50\uD574"
     - "\uC65C"
-    - "5\uC6D4"
+    - 5
     - "\uC624\uC640\uC774"
     - "\uBAA8\uC544\uC774"
+    - "\uC624\uD6C4\uC5D0"
+    - "\uBB50\uC57C"
+    - "\uBB50\uAC00 \uD574"
+    - "\uBB50\uD558\uC774"
+    - "\uC544 \uC77C"
+    - "\uC653"
+  - spellName: Sau
+    variations:
+    - "\uC2F8\uC6B0"
+    - "\uC544\uC6B0"
+    - "\uC751"
   koreanAsrModelID: sherpa-onnx-zipformer-korean-2024-06-24
   vadModelID: silero_vad_v5
 --- !u!1 &1704718655
@@ -1956,7 +1980,7 @@ MonoBehaviour:
   unlockedSpells:
   - Uwae
   - Lette
-  requireVoiceMatch: 0
+  requireVoiceMatch: 1
 --- !u!4 &1848135152
 Transform:
   m_ObjectHideFlags: 0

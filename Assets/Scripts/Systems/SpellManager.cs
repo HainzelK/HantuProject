@@ -9,7 +9,7 @@ public class SpellManager : MonoBehaviour
     [Header("References")]
     public ProjectileShooter projectileShooter;
     public Transform playerCamera;
-    public SpeechSpellcaster speechSpellcaster; // drag di inspector
+    public SpeechSpellcaster speechSpellcaster;
 
     [Header("UI to Hide During Popup")]
     public GameObject[] uiToHide;
@@ -22,13 +22,14 @@ public class SpellManager : MonoBehaviour
 
     [Header("Spells")]
     public List<string> unlockedSpells = new List<string> { "Lette", "Uwae" };
-    private List<string> currentHand = new List<string>(); // ✅ DECLARED HERE
+    private List<string> currentHand = new List<string>();
 
     [Header("Settings")]
-    public bool requireVoiceMatch = true;   // kalau true → harus ngomong, kalau false → langsung tembak
+    public bool requireVoiceMatch = true;
 
+    private int maxHandSize = 3;
 
-    private int maxHandSize = 3; // ← changed to 3
+    private int _pendingCardIndex = -1;
 
     void Start()
     {
@@ -36,7 +37,6 @@ public class SpellManager : MonoBehaviour
         UpdateSpellUI();
         HideUnlockPopup();
 
-        // Subscribe ke event
         if (projectileShooter != null)
             projectileShooter.onSpellCast += OnSpellCastSuccess;
     }
@@ -53,14 +53,10 @@ public class SpellManager : MonoBehaviour
     void ShowUnlockPopup(string spellName)
     {
         unlockText.text = $"New Spell Unlocked!\n{spellName}";
-
-        // Hide other UI
         foreach (var ui in uiToHide)
         {
             if (ui != null) ui.SetActive(false);
         }
-
-        // ✅ PAUSE THE GAME
         Time.timeScale = 0f;
         unlockPopup.SetActive(true);
     }
@@ -68,14 +64,10 @@ public class SpellManager : MonoBehaviour
     public void OnCloseUnlockPopup()
     {
         unlockPopup.SetActive(false);
-
-        // Re-show other UI
         foreach (var ui in uiToHide)
         {
             if (ui != null) ui.SetActive(true);
         }
-
-        // ✅ RESUME THE GAME
         Time.timeScale = 1f;
     }
 
@@ -101,18 +93,23 @@ public class SpellManager : MonoBehaviour
             Destroy(child.gameObject);
         }
 
-        foreach (string spell in currentHand)
+        for (int i = 0; i < currentHand.Count; i++)
         {
-            string spellName = spell;
+            int cardIndex = i;
+            string spellName = currentHand[cardIndex];
+
             GameObject card = Instantiate(spellCardPrefab, spellPanel.transform);
             card.GetComponentInChildren<TextMeshProUGUI>().text = spellName;
             Button btn = card.GetComponent<Button>();
-            btn.onClick.AddListener(() => OnSpellClicked(spellName));
+
+            btn.onClick.AddListener(() => OnSpellClicked(spellName, cardIndex));
         }
     }
 
-    void OnSpellClicked(string spellName)
+    void OnSpellClicked(string spellName, int cardIndex)
     {
+        _pendingCardIndex = cardIndex;
+
         if (requireVoiceMatch)
         {
             speechSpellcaster?.SetPendingSpell(spellName);
@@ -120,18 +117,30 @@ public class SpellManager : MonoBehaviour
         else
         {
             projectileShooter?.TryShoot(spellName);
-            // Ganti kartu via event onSpellCast (lihat langkah opsional di bawah)
         }
     }
 
     void OnSpellCastSuccess(string spellName)
     {
-        int index = currentHand.IndexOf(spellName);
-        if (index >= 0)
+        if (_pendingCardIndex >= 0 && _pendingCardIndex < currentHand.Count)
         {
-            currentHand[index] = GetRandomUnlockedSpell();
-            UpdateSpellUI();
+            if (currentHand[_pendingCardIndex] == spellName)
+            {
+                Debug.Log($"Replacing card at index {_pendingCardIndex} ({spellName}) with a new spell.");
+                currentHand[_pendingCardIndex] = GetRandomUnlockedSpell();
+                UpdateSpellUI();
+            }
+            else
+            {
+                Debug.LogWarning($"Spell cast ({spellName}) does not match pending card ({currentHand[_pendingCardIndex]}) at index {_pendingCardIndex}. No card replaced.");
+            }
         }
+        else
+        {
+            Debug.LogError($"OnSpellCastSuccess called with no valid pending card index ({_pendingCardIndex}).");
+        }
+
+        _pendingCardIndex = -1;
     }
 
     void HideUnlockPopup()
