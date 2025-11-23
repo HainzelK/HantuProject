@@ -1498,7 +1498,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 783a27c8330c06b4497f0860ca528ea5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  projectilePrefab: {fileID: 6670577681840426803, guid: 08102fe7341039749ba6745378055670, type: 3}
+  thunderProjectile: {fileID: 515461883286636531, guid: 2758c65efea0aa64690f86b7be226fd0, type: 3}
+  waterProjectile: {fileID: 515461883286636531, guid: 2758c65efea0aa64690f86b7be226fd0, type: 3}
+  fireProjectile: {fileID: 515461883286636531, guid: 2758c65efea0aa64690f86b7be226fd0, type: 3}
   shootForce: 10
   spawnOffset: 0.25
   projectileLifetime: 8
@@ -1616,7 +1618,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   killedByProjectile: 0
-  cubePrefab: {fileID: 8428577008010722953, guid: 5e63758b1d16e90419c71d506bdb2c76, type: 3}
+  cubePrefab: {fileID: 2308097063520044029, guid: 3d21f9cfdf7935b4e994a10552bd00a1, type: 3}
   playerTarget: {fileID: 1678815536}
   waveText: {fileID: 471167484}
   killText: {fileID: 2104994749}

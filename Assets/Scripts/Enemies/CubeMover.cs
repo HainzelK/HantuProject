@@ -6,7 +6,6 @@ public class CubeMover : MonoBehaviour
     public float baseSpeed = 0.8f;
     public float acceleration = 0.5f;
     public float rotateSpeed = 5f;
-
     public float stopDistance = 0.45f;
     public bool destroyOnReach = true;
     public float destroyDelay = 0.5f;
@@ -14,10 +13,13 @@ public class CubeMover : MonoBehaviour
     private float currentSpeed;
     private bool reachedPlayer = false;
     private EdgeFlash edgeFlash;
+    private Animator animator; // 🔥 NEW: For animation control
 
     void Start()
     {
         currentSpeed = baseSpeed;
+        animator = GetComponent<Animator>(); // 🔥 GET ANIMATOR
+        
         if (edgeFlash == null)
         {
             edgeFlash = FindObjectOfType<EdgeFlash>();
@@ -30,13 +32,19 @@ public class CubeMover : MonoBehaviour
 
         Vector3 myPos = transform.position;
         Vector3 targetFlat = new Vector3(target.position.x, myPos.y, target.position.z);
-
         float distance = Vector3.Distance(myPos, targetFlat);
 
-        if (distance > stopDistance)
+        bool isMoving = distance > stopDistance;
+
+        // 🔥 CONTROL ANIMATION
+        if (animator != null)
+        {
+            animator.SetBool("IsMoving", isMoving);
+        }
+
+        if (isMoving)
         {
             currentSpeed += acceleration * Time.deltaTime;
-
             Vector3 dir = (targetFlat - myPos).normalized;
 
             if (dir.sqrMagnitude > 0.001f)
@@ -54,8 +62,6 @@ public class CubeMover : MonoBehaviour
                 reachedPlayer = true;
                 Debug.Log("Cube reached player — NOT counting as kill");
                 edgeFlash?.Trigger(Color.red, 0.4f);
-
-                // ✅ Apply damage when reaching player
                 PlayerHealth.Instance?.TakeDamage(20f);
             }
 
@@ -73,15 +79,10 @@ public class CubeMover : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
-        // If cube reaches player (AR Camera)
         if (other.CompareTag("MainCamera"))
         {
             Debug.Log("Cube hit player via trigger!");
-
-            // ✅ Damage player (fallback if Update() didn't trigger)
             PlayerHealth.Instance?.TakeDamage(20f);
-
-            // Optional: destroy cube on hit
             Destroy(gameObject);
         }
     }
