@@ -77,8 +77,8 @@ public class ProjectileShooter : MonoBehaviour
         // Set color based on spell
         Color spellColor = spellName switch
         {
-            "Lette" => Color.yellow,           // ⚡ Thunder
-            "Uwae" => Color.blue,          // 💧 Water
+            "Spell 1" or"Lette" => Color.yellow,           // ⚡ Thunder
+            "Spell 2" or "Uwae" => Color.blue,          // 💧 Water
             "Spell 3" => Color.red,        // 🔥 Fire
             _ => Color.white
         };
