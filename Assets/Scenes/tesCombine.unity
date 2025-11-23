@@ -1554,7 +1554,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   spells:
-  - spellName: Lette
+  - spellName: api
+    variations:
+    - "\uC544\uD53C"
+    - "\uC544\uBE44"
+    - "\uC544\uC090"
+    - "\uC704"
+    - "\uC811\uC774"
+    - "\uCEE4\uD53C"
+  - spellName: lette
     variations:
     - "\uB808\uD14C"
     - "\uB974\uB5BC"
@@ -1564,14 +1572,31 @@ MonoBehaviour:
     - "\uB124"
     - "\uC778\uB370"
     - "\uB974\uC740\uB370"
-  - spellName: Uwae
+    - "\uADF8\uB798"
+    - "\uB86F\uB370"
+    - "\uB54C"
+    - "\uBA87 \uC5D0"
+    - "\uB7A9?"
+    - "\uB2A6\uB124"
+  - spellName: uwai
     variations:
     - "\uC6B0\uC560"
     - "\uBB50\uD574"
     - "\uC65C"
-    - "5\uC6D4"
+    - 5
     - "\uC624\uC640\uC774"
     - "\uBAA8\uC544\uC774"
+    - "\uC624\uD6C4\uC5D0"
+    - "\uBB50\uC57C"
+    - "\uBB50\uAC00 \uD574"
+    - "\uBB50\uD558\uC774"
+    - "\uC544 \uC77C"
+    - "\uC653"
+  - spellName: sau
+    variations:
+    - "\uC2F8\uC6B0"
+    - "\uC544\uC6B0"
+    - "\uC751"
   koreanAsrModelID: sherpa-onnx-zipformer-korean-2024-06-24
   vadModelID: silero_vad_v5
 --- !u!1 &1704718655
@@ -1954,8 +1979,8 @@ MonoBehaviour:
   unlockPopup: {fileID: 996732602}
   unlockText: {fileID: 2132513981}
   unlockedSpells:
-  - Uwae
-  - Lette
+  - uwai
+  - lette
   requireVoiceMatch: 0
 --- !u!4 &1848135152
 Transform:
