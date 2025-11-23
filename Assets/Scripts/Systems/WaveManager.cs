@@ -75,11 +75,7 @@ void SpawnCube360()
 
     float angle = Random.Range(0f, 360f);
     Vector3 dir = Quaternion.Euler(0f, angle, 0f) * Vector3.forward;
-    Vector3 spawnPos = new Vector3(
-    playerTarget.position.x, 
-    0f,  // ← Ground level (Y=0)
-    playerTarget.position.z
-) + dir * spawnDistance + Vector3.up * heightOffset;
+    Vector3 spawnPos = playerTarget.position + dir * spawnDistance + Vector3.up * heightOffset;
 
     GameObject cube = Instantiate(cubePrefab, spawnPos, Quaternion.identity);
     cube.name = $"Enemy_W{waveNumber}_T{Time.frameCount}";

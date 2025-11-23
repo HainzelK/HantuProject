@@ -4,12 +4,8 @@ public class ProjectileCollision : MonoBehaviour
 {
     public float damage = 50f;
 
-    
-
     void OnCollisionEnter(Collision collision)
     {
-
-         Debug.Log($"[Projectile] Collided with: {collision.gameObject.name}, Tag: '{collision.gameObject.tag}'");
         // 🔥 Check if hit object is the MAIN CAMERA (player)
         if (collision.gameObject.CompareTag("MainCamera"))
         {
