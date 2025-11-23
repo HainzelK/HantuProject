@@ -1554,7 +1554,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   spells:
-  - spellName: Api
+  - spellName: api
     variations:
     - "\uC544\uD53C"
     - "\uC544\uBE44"
@@ -1562,7 +1562,7 @@ MonoBehaviour:
     - "\uC704"
     - "\uC811\uC774"
     - "\uCEE4\uD53C"
-  - spellName: Lette
+  - spellName: lette
     variations:
     - "\uB808\uD14C"
     - "\uB974\uB5BC"
@@ -1577,7 +1577,8 @@ MonoBehaviour:
     - "\uB54C"
     - "\uBA87 \uC5D0"
     - "\uB7A9?"
-  - spellName: Uwae
+    - "\uB2A6\uB124"
+  - spellName: uwai
     variations:
     - "\uC6B0\uC560"
     - "\uBB50\uD574"
@@ -1591,7 +1592,7 @@ MonoBehaviour:
     - "\uBB50\uD558\uC774"
     - "\uC544 \uC77C"
     - "\uC653"
-  - spellName: Sau
+  - spellName: sau
     variations:
     - "\uC2F8\uC6B0"
     - "\uC544\uC6B0"
@@ -1978,9 +1979,9 @@ MonoBehaviour:
   unlockPopup: {fileID: 996732602}
   unlockText: {fileID: 2132513981}
   unlockedSpells:
-  - Uwae
-  - Lette
-  requireVoiceMatch: 1
+  - uwai
+  - lette
+  requireVoiceMatch: 0
 --- !u!4 &1848135152
 Transform:
   m_ObjectHideFlags: 0

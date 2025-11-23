@@ -21,8 +21,9 @@ public class SpellManager : MonoBehaviour
     public TextMeshProUGUI unlockText;
 
     [Header("Spells")]
-    public List<string> unlockedSpells = new List<string> { "Lette", "Uwae" };
+    public List<string> unlockedSpells = new List<string> { "Lette", "Uwai" };
     private List<string> currentHand = new List<string>();
+    private Dictionary<string, Sprite> spellSpriteCache = new Dictionary<string, Sprite>();
 
     [Header("Settings")]
     public bool requireVoiceMatch = true;
@@ -86,8 +87,38 @@ public class SpellManager : MonoBehaviour
         return unlockedSpells[Random.Range(0, unlockedSpells.Count)];
     }
 
+    Sprite GetSpellSprite(string spellName)
+    {
+        if (string.IsNullOrEmpty(spellName))
+        {
+            Debug.LogWarning("[SpellManager] Attempted to load sprite with null or empty spell name.");
+            return null;
+        }
+
+        // Gunakan spellName langsung (opsional: normalisasi case)
+        string path = $"Spells/{spellName}";
+
+        // Coba load sebagai Sprite
+        Sprite sprite = Resources.Load<Sprite>(path);
+        if (sprite != null)
+        {
+            return sprite;
+        }
+
+        // Debug: coba cek apakah file ada sebagai Texture2D (tapi seharusnya tidak perlu kalau import benar)
+        Texture2D tex = Resources.Load<Texture2D>(path);
+        if (tex != null)
+        {
+            Debug.LogError($"[SpellManager] Found texture at '{path}' but NOT as Sprite! Please set import type to 'Sprite (2D and UI)' for '{spellName}.png'");
+            return null;
+        }
+
+        Debug.LogError($"[SpellManager] Sprite not found for spell '{spellName}'. Expected path: 'Assets/Resources/{path}.png'");
+        return null;
+    }
     void UpdateSpellUI()
     {
+        // Bersihkan kartu lama
         foreach (Transform child in spellPanel.transform)
         {
             Destroy(child.gameObject);
@@ -95,17 +126,45 @@ public class SpellManager : MonoBehaviour
 
         for (int i = 0; i < currentHand.Count; i++)
         {
-            int cardIndex = i;
-            string spellName = currentHand[cardIndex];
+            string spellName = currentHand[i];
+            Sprite sprite = GetSpellSprite(spellName); // helper yang sudah dibuat
 
             GameObject card = Instantiate(spellCardPrefab, spellPanel.transform);
-            card.GetComponentInChildren<TextMeshProUGUI>().text = spellName;
-            Button btn = card.GetComponent<Button>();
 
-            btn.onClick.AddListener(() => OnSpellClicked(spellName, cardIndex));
+            // Cari Image di prefab (bisa di root atau child)
+            Image imageComponent = card.GetComponent<Image>() ?? card.GetComponentInChildren<Image>();
+            if (imageComponent != null)
+            {
+                imageComponent.sprite = sprite;
+                imageComponent.preserveAspect = true;
+
+                // 🔍 LOG UNTUK KONFIRMASI
+                if (sprite != null)
+                {
+                    Debug.Log($"[SpellManager] Assigned sprite '{spellName}' to card at index {i}.");
+                }
+                else
+                {
+                    Debug.LogWarning($"[SpellManager] Assigned NULL sprite to card at index {i}.");
+                }
+            }
+            // Opsional: sembunyikan teks jika tidak dipakai
+            TextMeshProUGUI textComponent = card.GetComponentInChildren<TextMeshProUGUI>();
+            if (textComponent != null)
+            {
+                textComponent.gameObject.SetActive(false); // atau hapus saja dari prefab
+            }
+
+            // Tambahkan listener klik
+            Button btn = card.GetComponent<Button>();
+            if (btn != null)
+            {
+                int cardIndex = i;
+                btn.onClick.RemoveAllListeners();
+                btn.onClick.AddListener(() => OnSpellClicked(spellName, cardIndex));
+            }
         }
     }
-
     void OnSpellClicked(string spellName, int cardIndex)
     {
         _pendingCardIndex = cardIndex;
