@@ -13,10 +13,15 @@ public class CubeMover : MonoBehaviour
 
     private float currentSpeed;
     private bool reachedPlayer = false;
+    private EdgeFlash edgeFlash;
 
     void Start()
     {
         currentSpeed = baseSpeed;
+        if (edgeFlash == null)
+        {
+            edgeFlash = FindObjectOfType<EdgeFlash>();
+        }
     }
 
     void Update()
@@ -48,7 +53,8 @@ public class CubeMover : MonoBehaviour
             {
                 reachedPlayer = true;
                 Debug.Log("Cube reached player — NOT counting as kill");
-                
+                edgeFlash?.Trigger(Color.red, 0.4f);
+
                 // ✅ Apply damage when reaching player
                 PlayerHealth.Instance?.TakeDamage(20f);
             }
@@ -65,16 +71,16 @@ public class CubeMover : MonoBehaviour
         return reachedPlayer;
     }
 
-    void OnTriggerEnter(Collider other) 
+    void OnTriggerEnter(Collider other)
     {
         // If cube reaches player (AR Camera)
         if (other.CompareTag("MainCamera"))
         {
             Debug.Log("Cube hit player via trigger!");
-            
+
             // ✅ Damage player (fallback if Update() didn't trigger)
             PlayerHealth.Instance?.TakeDamage(20f);
-            
+
             // Optional: destroy cube on hit
             Destroy(gameObject);
         }
