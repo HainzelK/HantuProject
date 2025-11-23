@@ -9,6 +9,18 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 99c6c25e9057f3a4f8f22441f93fb22c, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.44139
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 99c6c25e9057f3a4f8f22441f93fb22c, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.44139
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 99c6c25e9057f3a4f8f22441f93fb22c, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.44139
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 99c6c25e9057f3a4f8f22441f93fb22c, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
       objectReference: {fileID: 0}
@@ -66,9 +78,6 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 99c6c25e9057f3a4f8f22441f93fb22c, type: 3}
       insertIndex: -1
-      addedObject: {fileID: -3654142842967782609}
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 99c6c25e9057f3a4f8f22441f93fb22c, type: 3}
-      insertIndex: -1
       addedObject: {fileID: -6211808678497342905}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 99c6c25e9057f3a4f8f22441f93fb22c, type: 3}
       insertIndex: -1
@@ -94,28 +103,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 99c6c25e9057f3a4f8f22441f93fb22c, type: 3}
   m_PrefabInstance: {fileID: 3227229205157723820}
   m_PrefabAsset: {fileID: 0}
---- !u!64 &-3654142842967782609
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2308097063520044029}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 1
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 0}
 --- !u!33 &-6211808678497342905
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -147,7 +134,7 @@ Rigidbody:
   m_ImplicitCom: 1
   m_ImplicitTensor: 1
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
@@ -164,7 +151,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maxHealth: 100
-  enemyHpBarPrefab: {fileID: 6524255570471375744, guid: d6862844f32bf8e449caf63227e40b10, type: 3}
   hitFlashDuration: 0.25
 --- !u!114 &-90917953262581923
 MonoBehaviour:
