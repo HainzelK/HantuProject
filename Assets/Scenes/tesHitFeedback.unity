@@ -1498,9 +1498,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 783a27c8330c06b4497f0860ca528ea5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  thunderProjectile: {fileID: 515461883286636531, guid: 2758c65efea0aa64690f86b7be226fd0, type: 3}
-  waterProjectile: {fileID: 515461883286636531, guid: 2758c65efea0aa64690f86b7be226fd0, type: 3}
-  fireProjectile: {fileID: 515461883286636531, guid: 2758c65efea0aa64690f86b7be226fd0, type: 3}
+  thunderProjectile: {fileID: 3700114904341803050, guid: 2758c65efea0aa64690f86b7be226fd0, type: 3}
+  waterProjectile: {fileID: 3700114904341803050, guid: 2758c65efea0aa64690f86b7be226fd0, type: 3}
+  fireProjectile: {fileID: 3700114904341803050, guid: 2758c65efea0aa64690f86b7be226fd0, type: 3}
   shootForce: 10
   spawnOffset: 0.25
   projectileLifetime: 8
@@ -1625,7 +1625,7 @@ MonoBehaviour:
   enemyIndicatorManager: {fileID: 1791893942}
   spellManager: {fileID: 1848135151}
   spawnDistance: 13
-  heightOffset: 0
+  heightOffset: -0.8
   spawnInterval: 3
   baseEnemyHp: 100
   hpPerWave: 30

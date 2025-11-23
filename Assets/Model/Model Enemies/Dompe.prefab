@@ -151,7 +151,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maxHealth: 100
-  enemyHpBarPrefab: {fileID: 6524255570471375744, guid: d6862844f32bf8e449caf63227e40b10, type: 3}
   hitFlashDuration: 0.25
 --- !u!114 &-90917953262581923
 MonoBehaviour:
@@ -205,10 +204,10 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 1.41
-  m_Height: 1
+  m_Radius: 2
+  m_Height: 2
   m_Direction: 1
-  m_Center: {x: 0, y: 0, z: 0}
+  m_Center: {x: 0, y: 0.5, z: 0}
 --- !u!23 &-3731690922795390190
 MeshRenderer:
   m_ObjectHideFlags: 0
