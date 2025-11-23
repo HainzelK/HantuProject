@@ -156,7 +156,7 @@ public class WaveManager : MonoBehaviour
             if (spellManager != null)
             {
                 Debug.Log("SpellManager found — calling UnlockSpell");
-                spellManager.UnlockSpell("Api");
+                spellManager.UnlockSpell("api");
             }
             else
             {
