@@ -39,7 +39,7 @@ public class CubeMover : MonoBehaviour
         // 🔥 CONTROL ANIMATION
         if (animator != null)
         {
-            animator.SetBool("IsMoving", isMoving);
+            animator.SetBool("isMoving", isMoving);
         }
 
         if (isMoving)
