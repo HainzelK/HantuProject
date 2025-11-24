@@ -1,14 +1,18 @@
 using System.Collections;
 using UnityEngine;
 
+
 public class EnemyHealth : MonoBehaviour
 {
     public float maxHealth = 100f;
+
+    public Material hitMaterial;
     private float currentHealth;
     public float CurrentHealth => currentHealth;
 
-    private Renderer cubeRenderer;
-    private Color originalColor;
+    // 🔥 Use generic name (not "cube")
+    private Renderer enemyRenderer;
+    private Material originalMaterial;
     public float hitFlashDuration = 0.25f;
 
     void Start()
@@ -16,10 +20,11 @@ public class EnemyHealth : MonoBehaviour
         currentHealth = maxHealth;
         Debug.Log($"[EnemyHealth] {name} initialized with HP: {currentHealth}");
         
-        cubeRenderer = GetComponent<Renderer>();
-        if (cubeRenderer != null && cubeRenderer.material != null)
+        enemyRenderer = GetComponent<Renderer>();
+        if (enemyRenderer != null)
         {
-            originalColor = cubeRenderer.material.color;
+            // 🔥 Cache the ORIGINAL material (do not modify it)
+            originalMaterial = enemyRenderer.material;
         }
     }
 
@@ -34,33 +39,49 @@ public class EnemyHealth : MonoBehaviour
             Die();
     }
 
-    IEnumerator HitFlash()
+IEnumerator HitFlash()
+{
+    Debug.Log($"[HitFlash] Started for {name}");
+    
+    if (enemyRenderer == null)
     {
-        if (cubeRenderer == null) yield break;
-        
-        cubeRenderer.material.color = Color.red;
-        yield return new WaitForSeconds(hitFlashDuration);
-        
-        if (cubeRenderer.material != null)
-        {
-            cubeRenderer.material.color = originalColor;
-        }
+        Debug.LogError($"[HitFlash] Renderer is NULL on {name}");
+        yield break;
     }
+    
+    if (originalMaterial == null)
+    {
+        Debug.LogError($"[HitFlash] Original material is NULL on {name}");
+        yield break;
+    }
+
+    Material flashMaterial = new Material(originalMaterial);
+    flashMaterial.color = Color.red;
+    enemyRenderer.material = flashMaterial;
+
+    Debug.Log($"[HitFlash] Set to RED on {name}");
+
+    yield return new WaitForSeconds(hitFlashDuration);
+
+    if (enemyRenderer != null)
+    {
+        enemyRenderer.material = originalMaterial;
+        Destroy(flashMaterial);
+        Debug.Log($"[HitFlash] Restored original material on {name}");
+    }
+}
 
     void Die()
     {
         Debug.Log($"[EnemyHealth] {name} DIED! Notifying CubeMover for death animation...");
 
-        // 🔥 DO NOT DESTROY HERE!
-        // Let CubeMover handle animation and destruction.
         CubeMover mover = GetComponent<CubeMover>();
         if (mover != null)
         {
-            mover.TriggerDeath(); // ✅ This plays "death" animation and destroys after delay
+            mover.TriggerDeath();
         }
         else
         {
-            // Fallback: destroy immediately if no CubeMover (should not happen in normal setup)
             Destroy(gameObject);
         }
     }
