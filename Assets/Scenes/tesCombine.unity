@@ -1981,7 +1981,8 @@ MonoBehaviour:
   unlockedSpells:
   - uwai
   - lette
-  requireVoiceMatch: 0
+  requireVoiceMatch: 1
+  aksaraDisplayDuration: 1
 --- !u!4 &1848135152
 Transform:
   m_ObjectHideFlags: 0
