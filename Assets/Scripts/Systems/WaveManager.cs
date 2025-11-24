@@ -1,17 +1,18 @@
 using UnityEngine;
 using TMPro;
 using System.Collections;
+using System.Collections.Generic; // 👈 Keep this
 
 public class WaveManager : MonoBehaviour
 {
-    [HideInInspector]
-    public bool killedByProjectile = false;
-    public GameObject cubePrefab;
+    // 🔥 REPLACE cubePrefab with a list
+    public List<GameObject> enemyPrefabs; // Assign in Inspector: [Enemy1, Enemy2, Enemy3, ...]
+
     public Transform playerTarget;
     public TMP_Text waveText;
     public TMP_Text killText;
 
-    public EnemyIndicatorManager enemyIndicatorManager; // Assign in Inspector
+    public EnemyIndicatorManager enemyIndicatorManager;
     public SpellManager spellManager;
 
     public float spawnDistance = 2.5f;
@@ -21,27 +22,27 @@ public class WaveManager : MonoBehaviour
     [Header("Enemy HP")]
     public float baseEnemyHp = 100f;
     public float hpPerWave = 30f;
-
-    // ✅ NEW: How many kills needed to complete a wave?
     public int killsPerWave = 5;
 
     private bool isWaveActive = false;
     private int waveNumber = 1;
     private int currentWaveKills = 0;
-
     private Coroutine spawnCoroutine;
 
     void Start()
     {
-        Debug.Log("WaveManager STARTED");
         StartWave();
     }
 
     void StartWave()
     {
         if (!this.isActiveAndEnabled) return;
+        if (enemyPrefabs == null || enemyPrefabs.Count == 0)
+        {
+            Debug.LogError("No enemy prefabs assigned!");
+            return;
+        }
 
-        // Stop any previous wave
         if (spawnCoroutine != null)
         {
             StopCoroutine(spawnCoroutine);
@@ -54,7 +55,6 @@ public class WaveManager : MonoBehaviour
         waveText.text = "Wave " + waveNumber;
         UpdateKillText();
 
-        // Start infinite spawning
         spawnCoroutine = StartCoroutine(SpawnWaveRoutine());
     }
 
@@ -67,106 +67,86 @@ public class WaveManager : MonoBehaviour
         }
     }
 
-void SpawnCube360()
-{
-
-    
-    if (playerTarget == null) return;
-
-    float angle = Random.Range(0f, 360f);
-    Vector3 dir = Quaternion.Euler(0f, angle, 0f) * Vector3.forward;
-    Vector3 spawnPos = playerTarget.position + dir * spawnDistance + Vector3.up * heightOffset;
-
-    GameObject cube = Instantiate(cubePrefab, spawnPos, Quaternion.identity);
-    cube.name = $"Enemy_W{waveNumber}_T{Time.frameCount}";
-
-    // Setup CubeMover
-    CubeMover mover = cube.GetComponent<CubeMover>();
-    if (mover != null)
+    void SpawnCube360()
     {
-        mover.target = playerTarget;
-    }
-    else
-    {
-        Debug.LogWarning($"[Spawn] {cube.name} missing CubeMover!", cube);
+        if (playerTarget == null) return;
+
+        // 🔥 PICK ENEMY BASED ON WAVE NUMBER (1-based)
+        int prefabIndex = (waveNumber - 1) % enemyPrefabs.Count; // Cycle if waves > prefabs
+        GameObject prefabToSpawn = enemyPrefabs[prefabIndex];
+
+        float angle = Random.Range(0f, 360f);
+        Vector3 dir = Quaternion.Euler(0f, angle, 0f) * Vector3.forward;
+        Vector3 spawnPos = playerTarget.position + dir * spawnDistance + Vector3.up * heightOffset;
+
+        GameObject cube = Instantiate(prefabToSpawn, spawnPos, Quaternion.identity);
+        cube.name = $"Enemy_W{waveNumber}_T{Time.frameCount}";
+
+        CubeMover mover = cube.GetComponent<CubeMover>();
+        if (mover != null)
+        {
+            mover.target = playerTarget;
+        }
+        else
+        {
+            Debug.LogWarning($"[Spawn] {cube.name} missing CubeMover!", cube);
+        }
+
+        CubeTracker tracker = cube.GetComponent<CubeTracker>();
+        if (tracker != null)
+        {
+            tracker.Initialize(this);
+        }
+        else
+        {
+            Debug.LogError($"[Spawn] {cube.name} missing CubeTracker! Add to prefab.", cube);
+        }
+
+        EnemyHealth enemyHealth = cube.GetComponent<EnemyHealth>();
+        if (enemyHealth != null)
+        {
+            enemyHealth.maxHealth = baseEnemyHp + (waveNumber - 1) * hpPerWave;
+        }
+        else
+        {
+            Debug.LogWarning($"[Spawn] {cube.name} missing EnemyHealth component!", cube);
+        }
+
+        if (enemyIndicatorManager != null)
+        {
+            enemyIndicatorManager.RegisterEnemy(cube);
+        }
+        else if (enemyIndicatorManager == null && waveNumber == 1)
+        {
+            Debug.LogWarning("[Spawn] EnemyIndicatorManager not assigned! Indicators disabled.");
+        }
     }
 
-    // Setup CubeTracker
-    CubeTracker tracker = cube.GetComponent<CubeTracker>();
-    if (tracker != null)
-    {
-        tracker.Initialize(this);
-    }
-    else
-    {
-        Debug.LogError($"[Spawn] {cube.name} missing CubeTracker! Add to prefab.", cube);
-    }
-
-    // ✅ Setup EnemyHealth with wave-based HP
-    
-    EnemyHealth enemyHealth = cube.GetComponent<EnemyHealth>();
-
-    enemyHealth.maxHealth = baseEnemyHp + (waveNumber - 1) * hpPerWave;
-    if (enemyHealth != null)
-    {
-        // 🔥 Set HP based on wave number (example: +30 HP per wave)
-        enemyHealth.maxHealth = 100f + (waveNumber - 1) * 30f;
-        // HP will be initialized in EnemyHealth.Start()
-    }
-    else
-    {
-        Debug.LogWarning($"[Spawn] {cube.name} missing EnemyHealth component!", cube);
-    }
-
-    // ✅ Register with EnemyIndicatorManager (if available)
-    if (enemyIndicatorManager != null)
-    {
-        enemyIndicatorManager.RegisterEnemy(cube);
-    }
-    else if (enemyIndicatorManager == null && waveNumber == 1)
-    {
-        Debug.LogWarning("[Spawn] EnemyIndicatorManager not assigned! Indicators disabled.");
-    }
-}
     public void RegisterKill()
     {
-        if (!isWaveActive) return; // Ignore kills between waves
-
+        if (!isWaveActive) return;
         currentWaveKills++;
         UpdateKillText();
 
-        Debug.Log($"Kill registered! Current wave kills: {currentWaveKills}/{killsPerWave}");
-
-        // ✅ Check if wave prerequisite is met: enough kills?
         if (currentWaveKills >= killsPerWave)
         {
             CompleteWave();
         }
     }
 
-void CompleteWave()
-{
-    isWaveActive = false;
-    Debug.Log($"\n=== WAVE {waveNumber} COMPLETED ===");
-
-    // ✅ Unlock Spell 3 ONLY after Wave 1
-    if (waveNumber == 1)
+    void CompleteWave()
     {
-        Debug.Log("Wave 1 complete — attempting to unlock Spell 3");
-        if (spellManager != null)
+        isWaveActive = false;
+        Debug.Log($"\n=== WAVE {waveNumber} COMPLETED ===");
+
+        if (waveNumber == 1 && spellManager != null)
         {
-            Debug.Log("SpellManager found — calling UnlockSpell");
             spellManager.UnlockSpell("Spell 3");
         }
-        else
-        {
-            Debug.LogError("SpellManager is NULL! Did you assign it in Inspector?");
-        }
-    }
 
-    waveNumber++;
-    StartCoroutine(DelayedStartWave(1f));
-}
+        waveNumber++;
+        StartCoroutine(DelayedStartWave(1f));
+    }
 
     IEnumerator DelayedStartWave(float delay)
     {

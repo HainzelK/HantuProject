@@ -3,7 +3,12 @@ guid: 59b4eb355157af04fb153fd6120a11f4
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: skinputih
+    second: {fileID: 2800000, guid: 5623faa318465ba46a4bd6ef3df4b090, type: 3}
   materials:
     materialImportMode: 2
     materialName: 0

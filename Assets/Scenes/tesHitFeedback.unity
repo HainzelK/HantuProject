@@ -1617,8 +1617,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9dc50c13d875a244ba243cb881d57869, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  killedByProjectile: 0
-  cubePrefab: {fileID: 2308097063520044029, guid: 3d21f9cfdf7935b4e994a10552bd00a1, type: 3}
+  enemyPrefabs:
+  - {fileID: 2308097063520044029, guid: 3d21f9cfdf7935b4e994a10552bd00a1, type: 3}
+  - {fileID: 3546755780160334386, guid: 59f6453e6bb162b4bb4974abcfaf9999, type: 3}
   playerTarget: {fileID: 1678815536}
   waveText: {fileID: 471167484}
   killText: {fileID: 2104994749}
@@ -1878,14 +1879,14 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1961885715}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0.23376244, z: -0, w: 0.9722938}
   m_LocalPosition: {x: -0.07339836, y: 1.7, z: -0.23922199}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2028874985}
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: -27.037, z: 0}
 --- !u!1 &2022827211
 GameObject:
   m_ObjectHideFlags: 0

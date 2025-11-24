@@ -141,7 +141,7 @@ public class CubeMover : MonoBehaviour
         if (animator != null)
         {
             animator.SetTrigger("death");
-            Destroy(gameObject, 3.06f);
+            Destroy(gameObject, 1f);
         }
         else
         {
