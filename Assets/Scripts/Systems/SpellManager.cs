@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
+using System.Collections;
 
 public class SpellManager : MonoBehaviour
 {
@@ -31,6 +32,8 @@ public class SpellManager : MonoBehaviour
     private int maxHandSize = 3;
 
     private int _pendingCardIndex = -1;
+    public float aksaraDisplayDuration = 1.0f; // durasi tampil sebelum shoot
+    private GameObject _currentAksaraInstance = null;
 
     void Start()
     {
@@ -165,6 +168,68 @@ public class SpellManager : MonoBehaviour
             }
         }
     }
+
+    IEnumerator ShowAksaraAndShoot(string spellName)
+    {
+        // Sembunyikan model lama jika ada
+        if (_currentAksaraInstance != null)
+        {
+            Destroy(_currentAksaraInstance);
+        }
+
+        string cleanName = spellName.ToLower(); // "Uwai" → "uwai"
+        string path = $"Aksara/aksara_{cleanName}";
+        GameObject aksaraPrefab = Resources.Load<GameObject>(path);
+
+        if (aksaraPrefab == null)
+        {
+            Debug.LogError($"[SpellManager] Aksara prefab not found at 'Resources/{path}'");
+            // Tetap lanjutkan ke TryShoot meski model tidak ada
+            projectileShooter?.TryShoot(spellName);
+            yield break;
+        }
+
+        // Spawn di depan kamera
+        float displayDistance = 1.5f; // meter di depan
+        Vector3 spawnPos = playerCamera.position + playerCamera.forward * displayDistance;
+        Quaternion spawnRot = playerCamera.rotation;
+
+        _currentAksaraInstance = Instantiate(aksaraPrefab, spawnPos, spawnRot);
+
+        // Opsional: tambahkan scaling animasi sederhana
+        Transform model = _currentAksaraInstance.transform;
+        model.localScale = Vector3.zero;
+
+        // Simple pop-in animation (tanpa Animator)
+        float elapsed = 0f;
+        Vector3 targetScale = Vector3.one * 0.5f; // sesuaikan skala akhir
+        while (elapsed < 0.3f)
+        {
+            model.localScale = Vector3.Lerp(Vector3.zero, targetScale, elapsed / 0.3f);
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+        model.localScale = targetScale;
+
+        // Tunggu durasi tampil
+        yield return new WaitForSeconds(aksaraDisplayDuration);
+
+        // Tembak projectile
+        projectileShooter?.TryShoot(spellName);
+
+        // Hancurkan model
+        if (_currentAksaraInstance != null)
+        {
+            Destroy(_currentAksaraInstance);
+            _currentAksaraInstance = null;
+        }
+    }
+
+    public void CastSpellWithAksara(string spellName)
+    {
+        StartCoroutine(ShowAksaraAndShoot(spellName));
+    }
+
     void OnSpellClicked(string spellName, int cardIndex)
     {
         _pendingCardIndex = cardIndex;
@@ -175,10 +240,9 @@ public class SpellManager : MonoBehaviour
         }
         else
         {
-            projectileShooter?.TryShoot(spellName);
+            StartCoroutine(ShowAksaraAndShoot(spellName));
         }
     }
-
     void OnSpellCastSuccess(string spellName)
     {
         if (_pendingCardIndex >= 0 && _pendingCardIndex < currentHand.Count)

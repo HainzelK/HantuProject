@@ -41,6 +41,9 @@ public class SpeechSpellcaster : MonoBehaviour
 
     void Start()
     {
+        spellManager = FindObjectOfType<SpellManager>();
+        if (spellManager == null)
+            Debug.LogWarning("SpellManager not found!");
         projectileShooter = GetComponent<ProjectileShooter>();
         if (projectileShooter == null)
             Debug.LogError("ProjectileShooter tidak ditemukan! Tambahkan script ProjectileShooter ke kamera!");
@@ -191,7 +194,8 @@ public class SpeechSpellcaster : MonoBehaviour
             if (recognizedSpell.spellName == _pendingSpellName)
             {
                 Debug.Log($"[SUCCESS] Ucapan cocok: {_pendingSpellName}");
-                projectileShooter?.TryShoot(_pendingSpellName);
+                // 🔥 Panggil SpellManager untuk handle animasi + shoot
+                spellManager?.CastSpellWithAksara(_pendingSpellName);
             }
             else
             {
@@ -199,16 +203,14 @@ public class SpeechSpellcaster : MonoBehaviour
             }
 
             _pendingSpellName = null;
-            StopListening(); // 🛑 berhenti dengarkan setelah selesai
+            StopListening(); // ini method milik SpeechSpellcaster — OK di sini
         }
         else
         {
-            // Fallback: biasanya tidak terpakai di mode kartu
-            projectileShooter?.TryShoot(recognizedSpell.spellName);
-            // Opsional: juga StopListening() di sini jika kamu pakai mode voice-only
+            // Fallback (opsional): tembak langsung tanpa kartu
+            spellManager?.CastSpellWithAksara(recognizedSpell.spellName);
         }
-    }
-    // ===============================================
+    }    // ===============================================
     //   HANGUL MATCH CORE
     // ===============================================
     public static float HangulSimilarity(string a, string b)
