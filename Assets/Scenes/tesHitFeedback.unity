@@ -1625,7 +1625,7 @@ MonoBehaviour:
   enemyIndicatorManager: {fileID: 1791893942}
   spellManager: {fileID: 1848135151}
   spawnDistance: 13
-  heightOffset: -0.8
+  heightOffset: -1
   spawnInterval: 3
   baseEnemyHp: 100
   hpPerWave: 30

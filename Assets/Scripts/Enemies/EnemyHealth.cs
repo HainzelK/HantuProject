@@ -7,17 +7,15 @@ public class EnemyHealth : MonoBehaviour
     private float currentHealth;
     public float CurrentHealth => currentHealth;
 
-    // 🔥 HIT FEEDBACK FIELDS
     private Renderer cubeRenderer;
     private Color originalColor;
-    public float hitFlashDuration = 0.25f; // ~15 frames at 60fps
+    public float hitFlashDuration = 0.25f;
 
     void Start()
     {
         currentHealth = maxHealth;
         Debug.Log($"[EnemyHealth] {name} initialized with HP: {currentHealth}");
         
-        // 🔥 CACHE ORIGINAL CUBE COLOR
         cubeRenderer = GetComponent<Renderer>();
         if (cubeRenderer != null && cubeRenderer.material != null)
         {
@@ -30,24 +28,19 @@ public class EnemyHealth : MonoBehaviour
         currentHealth = Mathf.Clamp(currentHealth - amount, 0, maxHealth);
         Debug.Log($"[EnemyHealth] {name} took {amount} damage → HP: {currentHealth}");
         
-        // 🔥 TRIGGER HIT FEEDBACK
         StartCoroutine(HitFlash());
         
-        if (currentHealth <= 0) Die();
+        if (currentHealth <= 0) 
+            Die();
     }
 
-    // 🔥 HIT FEEDBACK COROUTINE
     IEnumerator HitFlash()
     {
         if (cubeRenderer == null) yield break;
         
-        // Change to red
         cubeRenderer.material.color = Color.red;
-        
-        // Wait for duration
         yield return new WaitForSeconds(hitFlashDuration);
         
-        // Revert to original color
         if (cubeRenderer.material != null)
         {
             cubeRenderer.material.color = originalColor;
@@ -56,7 +49,19 @@ public class EnemyHealth : MonoBehaviour
 
     void Die()
     {
-        Debug.Log($"[EnemyHealth] {name} DIED!");
-        Destroy(gameObject);
+        Debug.Log($"[EnemyHealth] {name} DIED! Notifying CubeMover for death animation...");
+
+        // 🔥 DO NOT DESTROY HERE!
+        // Let CubeMover handle animation and destruction.
+        CubeMover mover = GetComponent<CubeMover>();
+        if (mover != null)
+        {
+            mover.TriggerDeath(); // ✅ This plays "death" animation and destroys after delay
+        }
+        else
+        {
+            // Fallback: destroy immediately if no CubeMover (should not happen in normal setup)
+            Destroy(gameObject);
+        }
     }
 }

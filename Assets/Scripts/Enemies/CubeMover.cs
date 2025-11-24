@@ -10,80 +10,150 @@ public class CubeMover : MonoBehaviour
     public bool destroyOnReach = true;
     public float destroyDelay = 0.5f;
 
-    private float currentSpeed;
+    // 🔥 Hit animation timing
+    public float hitAnimationDuration = 0.3f;
+    private float hitTime = -1000f;
+
+    // 🔥 NEW: Attack animation timing (start X seconds before arrival)
+    public float attackAnimationLeadTime = 2.0f;
+    private bool attackAnimationPlayed = false;
+
+    private bool canMove = false;
     private bool reachedPlayer = false;
+    private float currentSpeed;
     private EdgeFlash edgeFlash;
-    private Animator animator; // 🔥 NEW: For animation control
+    private Animator animator;
 
     void Start()
     {
         currentSpeed = baseSpeed;
-        animator = GetComponent<Animator>(); // 🔥 GET ANIMATOR
-        
-        if (edgeFlash == null)
+        animator = GetComponent<Animator>();
+        edgeFlash = FindObjectOfType<EdgeFlash>();
+
+        if (animator != null)
         {
-            edgeFlash = FindObjectOfType<EdgeFlash>();
+            animator.SetTrigger("spawn");
+            Invoke(nameof(EnableMovement), 1.0f);
+        }
+        else
+        {
+            canMove = true;
         }
     }
 
+    void EnableMovement() => canMove = true;
+
     void Update()
     {
-        if (target == null) return;
+        if (target == null || !canMove || reachedPlayer) return;
 
-        Vector3 myPos = transform.position;
-        Vector3 targetFlat = new Vector3(target.position.x, myPos.y, target.position.z);
-        float distance = Vector3.Distance(myPos, targetFlat);
+        Vector3 targetFlat = new Vector3(target.position.x, transform.position.y, target.position.z);
+        float distance = Vector3.Distance(transform.position, targetFlat);
+
+        // 🔥 Play attack animation early if within lead time (but not yet played)
+        if (!attackAnimationPlayed && distance > stopDistance)
+        {
+            float timeToImpact = distance / Mathf.Max(currentSpeed, 0.01f); // avoid divide by zero
+            if (timeToImpact <= attackAnimationLeadTime)
+            {
+                PlayAttackAnimation();
+                attackAnimationPlayed = true;
+            }
+        }
+
+        // 🔥 Pause movement during hit reaction
+        if (Time.time - hitTime < hitAnimationDuration)
+        {
+            // Keep rotating toward player during hit
+            Vector3 dir = (targetFlat - transform.position).normalized;
+            if (dir.sqrMagnitude > 0.001f)
+            {
+                transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(dir), rotateSpeed * Time.deltaTime);
+            }
+            return;
+        }
 
         bool isMoving = distance > stopDistance;
-
-        // 🔥 CONTROL ANIMATION
         if (animator != null)
         {
-            animator.SetBool("isMoving", isMoving);
+            try { animator.SetBool("isMoving", isMoving); } catch { }
         }
 
         if (isMoving)
         {
             currentSpeed += acceleration * Time.deltaTime;
-            Vector3 dir = (targetFlat - myPos).normalized;
-
+            Vector3 dir = (targetFlat - transform.position).normalized;
             if (dir.sqrMagnitude > 0.001f)
             {
-                Quaternion look = Quaternion.LookRotation(dir);
-                transform.rotation = Quaternion.Slerp(transform.rotation, look, rotateSpeed * Time.deltaTime);
+                transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(dir), rotateSpeed * Time.deltaTime);
             }
-
             transform.position += transform.forward * currentSpeed * Time.deltaTime;
         }
         else
         {
-            if (!reachedPlayer)
-            {
-                reachedPlayer = true;
-                Debug.Log("Cube reached player — NOT counting as kill");
-                edgeFlash?.Trigger(Color.red, 0.4f);
-                PlayerHealth.Instance?.TakeDamage(20f);
-            }
-
-            if (destroyOnReach)
-            {
-                Destroy(gameObject, destroyDelay);
-            }
+            EnemyReachesPlayer();
         }
     }
 
-    public bool HasReachedPlayer()
+    void PlayAttackAnimation()
     {
-        return reachedPlayer;
+        Debug.Log("👹 Starting REACH/ATTACK animation (2s before arrival)");
+        if (animator != null)
+        {
+            animator.SetTrigger("reachPlayer");
+        }
+    }
+
+    void EnemyReachesPlayer()
+    {
+        if (reachedPlayer) return;
+        reachedPlayer = true;
+
+        Debug.Log("💥 Enemy physically reached player — applying damage.");
+        edgeFlash?.Trigger(Color.red, 0.4f);
+        PlayerHealth.Instance?.TakeDamage(20f);
+
+        if (destroyOnReach)
+        {
+            Destroy(gameObject, destroyDelay);
+        }
+    }
+
+    public void TakeDamageFromPlayer()
+    {
+        if (reachedPlayer) return;
+
+        Debug.Log("💥 Enemy hit by player attack — playing TAKE DAMAGE animation.");
+        hitTime = Time.time;
+
+        if (animator != null)
+        {
+            animator.SetTrigger("takeDamage");
+        }
+    }
+
+    public void TriggerDeath()
+    {
+        if (reachedPlayer) return;
+        reachedPlayer = true;
+
+        Debug.Log("💀 Enemy killed by player — playing DEATH animation.");
+        if (animator != null)
+        {
+            animator.SetTrigger("death");
+            Destroy(gameObject, 3.06f);
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
     }
 
     void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("MainCamera"))
+        if (other.CompareTag("MainCamera") && !reachedPlayer)
         {
-            Debug.Log("Cube hit player via trigger!");
-            PlayerHealth.Instance?.TakeDamage(20f);
-            Destroy(gameObject);
+            EnemyReachesPlayer();
         }
     }
 }
