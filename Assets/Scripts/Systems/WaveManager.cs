@@ -139,9 +139,19 @@ public class WaveManager : MonoBehaviour
         isWaveActive = false;
         Debug.Log($"\n=== WAVE {waveNumber} COMPLETED ===");
 
-        if (waveNumber == 1 && spellManager != null)
+        // ✅ Unlock Spell 3 ONLY after Wave 1
+        if (waveNumber == 1)
         {
-            spellManager.UnlockSpell("Spell 3");
+            Debug.Log("Wave 1 complete — attempting to unlock Api");
+            if (spellManager != null)
+            {
+                Debug.Log("SpellManager found — calling UnlockSpell");
+                spellManager.UnlockSpell("api");
+            }
+            else
+            {
+                Debug.LogError("SpellManager is NULL! Did you assign it in Inspector?");
+            }
         }
 
         waveNumber++;
