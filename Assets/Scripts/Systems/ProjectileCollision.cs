@@ -6,7 +6,6 @@ public class ProjectileCollision : MonoBehaviour
 
     void OnCollisionEnter(Collision collision)
     {
-        // 🔥 Check if hit object is the MAIN CAMERA (player)
         if (collision.gameObject.CompareTag("MainCamera"))
         {
             PlayerHealth.Instance?.TakeDamage(damage);
@@ -14,23 +13,30 @@ public class ProjectileCollision : MonoBehaviour
             return;
         }
 
-        // Handle enemy cubes
         if (collision.gameObject.CompareTag("Cube"))
         {
             Debug.Log("Projectile hit cube!");
 
             EnemyHealth enemyHealth = collision.gameObject.GetComponent<EnemyHealth>();
+            CubeMover cubeMover = collision.gameObject.GetComponent<CubeMover>();
+
+            // 🔥 NEW: Always notify enemy of hit (play takeDamage anim)
+            cubeMover?.TakeDamageFromPlayer();
+
             if (enemyHealth != null)
             {
                 enemyHealth.TakeDamage(damage);
-                
+
                 if (enemyHealth.CurrentHealth <= 0)
                 {
+                    cubeMover?.TriggerDeath();
                     HandleEnemyDeath(collision.gameObject);
                 }
             }
             else
             {
+                // No health → kill instantly
+                cubeMover?.TriggerDeath();
                 HandleEnemyDeath(collision.gameObject);
             }
 
@@ -38,49 +44,48 @@ public class ProjectileCollision : MonoBehaviour
         }
     }
 
-    void HandleEnemyDeath(GameObject enemy)
+void HandleEnemyDeath(GameObject enemy)
+{
+    if (enemy == null) return;
+
+    CubeTracker tracker = enemy.GetComponent<CubeTracker>();
+    if (tracker != null)
     {
-        if (enemy == null) return;
+        tracker.killedByProjectile = true;
 
-        CubeTracker tracker = enemy.GetComponent<CubeTracker>();
-        if (tracker != null)
+        if (tracker.waveManager != null)
         {
-            tracker.killedByProjectile = true;
-
-            if (tracker.waveManager != null)
+            if (tracker.waveManager.enemyIndicatorManager != null)
             {
-                if (tracker.waveManager.enemyIndicatorManager != null)
-                {
-                    tracker.waveManager.enemyIndicatorManager.UnregisterEnemy(enemy);
-                }
-                tracker.waveManager.RegisterKill();
-                Debug.Log("Enemy killed! RegisterKill called.");
+                tracker.waveManager.enemyIndicatorManager.UnregisterEnemy(enemy);
             }
-            else
-            {
-                Debug.LogError("WaveManager reference missing on CubeTracker!");
-                Debug.LogError($"Cube name: {enemy.name}");
-                
-                var indicatorMgr = FindObjectOfType<EnemyIndicatorManager>();
-                if (indicatorMgr != null)
-                {
-                    indicatorMgr.UnregisterEnemy(enemy);
-                }
-            }
+            tracker.waveManager.RegisterKill();
+            Debug.Log("Enemy killed by projectile! RegisterKill called.");
         }
         else
         {
-            Debug.LogError("CubeTracker component missing on cube!");
+            Debug.LogError("WaveManager reference missing on CubeTracker!");
+            Debug.LogError($"Cube name: {enemy.name}");
+            
             var indicatorMgr = FindObjectOfType<EnemyIndicatorManager>();
             if (indicatorMgr != null)
             {
                 indicatorMgr.UnregisterEnemy(enemy);
             }
         }
-
-        if (enemy.GetComponent<EnemyHealth>() == null)
+    }
+    else
+    {
+        Debug.LogError("CubeTracker component missing on cube!");
+        var indicatorMgr = FindObjectOfType<EnemyIndicatorManager>();
+        if (indicatorMgr != null)
         {
-            Destroy(enemy);
+            indicatorMgr.UnregisterEnemy(enemy);
         }
     }
+
+    // 🔥 REMOVED: Do NOT destroy here at all!
+    // Destruction is handled by CubeMover.TriggerDeath()
 }
+
+}   

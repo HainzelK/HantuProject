@@ -1498,9 +1498,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 783a27c8330c06b4497f0860ca528ea5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  projectilePrefab: {fileID: 6670577681840426803, guid: 08102fe7341039749ba6745378055670, type: 3}
+  thunderProjectile: {fileID: 3700114904341803050, guid: 2758c65efea0aa64690f86b7be226fd0, type: 3}
+  waterProjectile: {fileID: 3700114904341803050, guid: 2758c65efea0aa64690f86b7be226fd0, type: 3}
+  fireProjectile: {fileID: 3700114904341803050, guid: 2758c65efea0aa64690f86b7be226fd0, type: 3}
   shootForce: 10
-  spawnOffset: 0.25
+  spawnOffset: 0
   projectileLifetime: 8
 --- !u!114 &1678815544
 MonoBehaviour:
@@ -1615,15 +1617,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9dc50c13d875a244ba243cb881d57869, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  killedByProjectile: 0
-  cubePrefab: {fileID: 8428577008010722953, guid: 5e63758b1d16e90419c71d506bdb2c76, type: 3}
+  enemyPrefabs:
+  - {fileID: 2308097063520044029, guid: 3d21f9cfdf7935b4e994a10552bd00a1, type: 3}
+  - {fileID: 3546755780160334386, guid: 59f6453e6bb162b4bb4974abcfaf9999, type: 3}
   playerTarget: {fileID: 1678815536}
   waveText: {fileID: 471167484}
   killText: {fileID: 2104994749}
   enemyIndicatorManager: {fileID: 1791893942}
   spellManager: {fileID: 1848135151}
   spawnDistance: 13
-  heightOffset: 0
+  heightOffset: -1.6
   spawnInterval: 3
   baseEnemyHp: 100
   hpPerWave: 30
@@ -1816,8 +1819,8 @@ MonoBehaviour:
   unlockPopup: {fileID: 996732602}
   unlockText: {fileID: 2132513981}
   unlockedSpells:
-  - Spell 1
-  - Spell 2
+  - lette
+  - uwai
   requireVoiceMatch: 0
 --- !u!4 &1848135152
 Transform:
@@ -1876,14 +1879,14 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1961885715}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0.23376244, z: -0, w: 0.9722938}
   m_LocalPosition: {x: -0.07339836, y: 1.7, z: -0.23922199}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2028874985}
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: -27.037, z: 0}
 --- !u!1 &2022827211
 GameObject:
   m_ObjectHideFlags: 0

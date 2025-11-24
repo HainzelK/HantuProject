@@ -2,21 +2,32 @@ using UnityEngine;
 
 public class ProjectileShooter : MonoBehaviour
 {
-    [Header("Projectile")]
-    public GameObject projectilePrefab;
+    [Header("Spell Projectiles")]
+    public GameObject thunderProjectile; // Spell 1 / "Lette"
+    public GameObject waterProjectile;   // Spell 2 / "Uwae"
+    public GameObject fireProjectile;    // Spell 3
+
+    [Header("Projectile Settings")]
     public float shootForce = 12f;
-    public float spawnOffset = 0.25f; // meters in front of camera
+    public float spawnOffset = 0.25f;
     public float projectileLifetime = 8f;
 
-    public System.Action<string> onSpellCast; // Event callback
-    /// <summary>
-    /// Called ONLY by SpellManager when a spell card is clicked.
-    /// </summary>
+    public System.Action<string> onSpellCast;
+
     public void TryShoot(string spellName = "Unknown")
     {
-        if (projectilePrefab == null)
+        // 🔥 SELECT PREFAB BASED ON SPELL
+        GameObject selectedPrefab = spellName switch
         {
-            Debug.LogError("[ProjectileShooter] projectilePrefab is NOT assigned!");
+            "Spell 1" or "Lette" => thunderProjectile,
+            "Spell 2" or "Uwae" => waterProjectile,
+            "Spell 3" => fireProjectile,
+            _ => thunderProjectile // fallback
+        };
+
+        if (selectedPrefab == null)
+        {
+            Debug.LogError($"[ProjectileShooter] Prefab missing for spell: {spellName}!");
             return;
         }
 
@@ -24,14 +35,14 @@ public class ProjectileShooter : MonoBehaviour
         Vector3 spawnPos = cam.TransformPoint(Vector3.forward * spawnOffset);
         Quaternion spawnRot = cam.rotation;
 
-        GameObject proj = Instantiate(projectilePrefab, spawnPos, spawnRot);
+        GameObject proj = Instantiate(selectedPrefab, spawnPos, spawnRot);
         if (proj == null)
         {
             Debug.LogError("[ProjectileShooter] Instantiate returned null!");
             return;
         }
 
-        // 🔥 SET COLOR BASED ON SPELL
+        // 🔥 SET COLOR (optional - use if models need recoloring)
         SetProjectileColor(proj, spellName);
 
         // Rigidbody
@@ -39,42 +50,35 @@ public class ProjectileShooter : MonoBehaviour
         rb.useGravity = false;
         rb.linearVelocity = cam.forward * shootForce;
 
-        // Collider
+        // Collider (only add if missing)
         if (proj.GetComponent<Collider>() == null)
         {
+            // Use model's bounds or default size
             proj.AddComponent<SphereCollider>().radius = 0.15f;
         }
 
         Destroy(proj, projectileLifetime);
-
         onSpellCast?.Invoke(spellName);
 
         // Debug log
         string spellType = spellName switch
         {
             "Lette" => "Thunder",
-            "Spell 2" => "Water",
+            "Uwae" => "Water",
             "Spell 3" => "Fire",
             _ => "Unknown"
         };
         Debug.Log($"[SPELL CAST] {spellName} → {spellType} projectile fired!");
-        onSpellCast?.Invoke(spellName);
     }
 
     void SetProjectileColor(GameObject projectile, string spellName)
     {
-        // Get the Renderer (MeshRenderer or SkinnedMeshRenderer)
         Renderer renderer = projectile.GetComponent<Renderer>();
-        if (renderer == null)
-        {
-            Debug.LogWarning("Projectile has no Renderer — can't set color!");
-            return;
-        }
+        if (renderer == null) return;
 
-        // Ensure the material is unique (avoid changing prefab material)
+        // Only recolor if you want to override model's material
         renderer.material = new Material(renderer.material);
-
-        // Set color based on spell
+        
         Color spellColor = spellName switch
         {
             "Spell 1" or "lette" => Color.yellow,           // ⚡ Thunder
@@ -82,8 +86,6 @@ public class ProjectileShooter : MonoBehaviour
             "Spell 3" or "api" => Color.red,        // 🔥 Fire
             _ => Color.white
         };
-
         renderer.material.color = spellColor;
     }
-
 }
