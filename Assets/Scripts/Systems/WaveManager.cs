@@ -1,12 +1,14 @@
 using UnityEngine;
 using TMPro;
 using System.Collections;
-using System.Collections.Generic; // 👈 Keep this
+using System.Collections.Generic;
 
 public class WaveManager : MonoBehaviour
 {
-    // 🔥 REPLACE cubePrefab with a list
-    public List<GameObject> enemyPrefabs; // Assign in Inspector: [Enemy1, Enemy2, Enemy3, ...]
+    // 🔥 Enemy prefabs and their speeds
+    public List<GameObject> enemyPrefabs;      // Assign in Inspector: [Enemy1, Enemy2, ...]
+    public List<float> enemyBaseSpeeds;        // Match index: [0.8f, 0.4f, ...]
+    public List<float> enemyAccelerations;     // Optional: [0.5f, 0.2f, ...]
 
     public Transform playerTarget;
     public TMP_Text waveText;
@@ -37,11 +39,16 @@ public class WaveManager : MonoBehaviour
     void StartWave()
     {
         if (!this.isActiveAndEnabled) return;
+        
+        // Validate lists
         if (enemyPrefabs == null || enemyPrefabs.Count == 0)
         {
             Debug.LogError("No enemy prefabs assigned!");
             return;
         }
+        
+        // Auto-fill speed/acceleration lists if missing
+        EnsureListsMatch();
 
         if (spawnCoroutine != null)
         {
@@ -58,6 +65,16 @@ public class WaveManager : MonoBehaviour
         spawnCoroutine = StartCoroutine(SpawnWaveRoutine());
     }
 
+    // 🔥 Ensure speed/acceleration lists match prefab count
+    void EnsureListsMatch()
+    {
+        while (enemyBaseSpeeds.Count < enemyPrefabs.Count)
+            enemyBaseSpeeds.Add(0.8f); // Default speed
+        
+        while (enemyAccelerations.Count < enemyPrefabs.Count)
+            enemyAccelerations.Add(0.5f); // Default acceleration
+    }
+
     IEnumerator SpawnWaveRoutine()
     {
         while (isWaveActive)
@@ -71,8 +88,7 @@ public class WaveManager : MonoBehaviour
     {
         if (playerTarget == null) return;
 
-        // 🔥 PICK ENEMY BASED ON WAVE NUMBER (1-based)
-        int prefabIndex = (waveNumber - 1) % enemyPrefabs.Count; // Cycle if waves > prefabs
+        int prefabIndex = (waveNumber - 1) % enemyPrefabs.Count;
         GameObject prefabToSpawn = enemyPrefabs[prefabIndex];
 
         float angle = Random.Range(0f, 360f);
@@ -82,10 +98,13 @@ public class WaveManager : MonoBehaviour
         GameObject cube = Instantiate(prefabToSpawn, spawnPos, Quaternion.identity);
         cube.name = $"Enemy_W{waveNumber}_T{Time.frameCount}";
 
+        // 🔥 Apply custom speed & acceleration
         CubeMover mover = cube.GetComponent<CubeMover>();
         if (mover != null)
         {
             mover.target = playerTarget;
+            mover.baseSpeed = enemyBaseSpeeds[prefabIndex];
+            mover.acceleration = enemyAccelerations[prefabIndex];
         }
         else
         {
@@ -105,7 +124,9 @@ public class WaveManager : MonoBehaviour
         EnemyHealth enemyHealth = cube.GetComponent<EnemyHealth>();
         if (enemyHealth != null)
         {
-            enemyHealth.maxHealth = baseEnemyHp + (waveNumber - 1) * hpPerWave;
+            // HP = base HP for this enemy type + wave bonus
+            float waveHP = baseEnemyHp + (waveNumber - 1) * hpPerWave;
+            enemyHealth.maxHealth = waveHP;
         }
         else
         {
@@ -139,7 +160,6 @@ public class WaveManager : MonoBehaviour
         isWaveActive = false;
         Debug.Log($"\n=== WAVE {waveNumber} COMPLETED ===");
 
-        // ✅ Unlock Spell 3 ONLY after Wave 1
         if (waveNumber == 1)
         {
             Debug.Log("Wave 1 complete — attempting to unlock Api");
