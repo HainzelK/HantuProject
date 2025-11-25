@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 1231588461281039944}
   - component: {fileID: -7090094045759093348}
   - component: {fileID: 6061866116881435565}
+  - component: {fileID: 2644666626471653716}
   m_Layer: 0
   m_Name: Sphere 1
   m_TagString: Untagged
@@ -67,7 +68,9 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 1019dec167ec4814495e43f051c0bf49, type: 2}
+  - {fileID: 2100000, guid: 671c0ad074e0d9441a2d7c1de2fb84ba, type: 2}
+  - {fileID: 2100000, guid: 0e25f29a9dc2702438d4320f77103a4e, type: 2}
+  - {fileID: 2100000, guid: cac90467ae371f4409cee04733776b6b, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -150,3 +153,18 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!114 &2644666626471653716
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6670577681840426803}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 878c17010baaa524ea8dc31ba5079123, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  vfxPrefab: {fileID: 3154561230611619130, guid: 19596d4944c908d44b039af0c5b74b0c, type: 3}
+  vfxPrefabPath: VFX/FireAura
+  localOffset: {x: 0, y: 0, z: 0}
