@@ -1758,8 +1758,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   enemyPrefabs:
-  - {fileID: 3546755780160334386, guid: 59f6453e6bb162b4bb4974abcfaf9999, type: 3}
   - {fileID: 2308097063520044029, guid: 3d21f9cfdf7935b4e994a10552bd00a1, type: 3}
+  - {fileID: 3546755780160334386, guid: 59f6453e6bb162b4bb4974abcfaf9999, type: 3}
   enemyBaseSpeeds:
   - 0.01
   - 0.03
@@ -1771,7 +1771,7 @@ MonoBehaviour:
   spellManager: {fileID: 1848135151}
   spawnDistance: 13
   heightOffset: -1.6
-  spawnInterval: 3
+  spawnInterval: 6
   baseEnemyHp: 50
   hpPerWave: 10
   killsPerWave: 5
