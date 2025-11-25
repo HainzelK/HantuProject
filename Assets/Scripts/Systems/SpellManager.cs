@@ -1,8 +1,8 @@
-// SpellManager.cs
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
+using System.Collections;
 
 public class SpellManager : MonoBehaviour
 {
@@ -20,10 +20,22 @@ public class SpellManager : MonoBehaviour
     public GameObject unlockPopup;
     public TextMeshProUGUI unlockText;
 
+    [Header("Dissolve Settings")]
+    public Material dissolveMaterial;
+    public string dissolvePropertyName = "_DissolveAmount";
+    public float dissolveDuration = 1.0f;
+
+    [Header("Spawn Settings")]
+    [Tooltip("Jarak kartu turun ke bawah sebelum naik")]
+    public float slideUpDistance = 100f;
+    [Tooltip("Durasi animasi kartu naik dan fade in")]
+    public float slideUpDuration = 0.5f;
+
+    private bool _isDissolving = false;
+
     [Header("Spells")]
     public List<string> unlockedSpells = new List<string> { "lette", "uwai", "sau" };
     private List<string> currentHand = new List<string>();
-    private Dictionary<string, Sprite> spellSpriteCache = new Dictionary<string, Sprite>();
 
     [Header("Settings")]
     public bool requireVoiceMatch = true;
@@ -35,7 +47,7 @@ public class SpellManager : MonoBehaviour
     void Start()
     {
         RefillHand();
-        UpdateSpellUI();
+        UpdateSpellUI(); // Default tanpa animasi
         HideUnlockPopup();
 
         if (projectileShooter != null)
@@ -54,10 +66,7 @@ public class SpellManager : MonoBehaviour
     void ShowUnlockPopup(string spellName)
     {
         unlockText.text = $"New Spell Unlocked!\n{spellName}";
-        foreach (var ui in uiToHide)
-        {
-            if (ui != null) ui.SetActive(false);
-        }
+        foreach (var ui in uiToHide) if (ui != null) ui.SetActive(false);
         Time.timeScale = 0f;
         unlockPopup.SetActive(true);
     }
@@ -65,10 +74,7 @@ public class SpellManager : MonoBehaviour
     public void OnCloseUnlockPopup()
     {
         unlockPopup.SetActive(false);
-        foreach (var ui in uiToHide)
-        {
-            if (ui != null) ui.SetActive(true);
-        }
+        foreach (var ui in uiToHide) if (ui != null) ui.SetActive(true);
         Time.timeScale = 1f;
     }
 
@@ -127,6 +133,22 @@ public class SpellManager : MonoBehaviour
 
             GameObject card = Instantiate(spellCardPrefab, spellPanel.transform);
 
+            // Pastikan ada CanvasGroup untuk kontrol Opacity
+            CanvasGroup cg = card.GetComponent<CanvasGroup>();
+            if (cg == null) cg = card.AddComponent<CanvasGroup>();
+
+            // --- KUNCI PERBAIKAN JITTER ---
+            // Jika ini adalah kartu yang akan dianimasikan, buat Invisible (Alpha 0) SEKARANG JUGA.
+            if (i == indexToAnimate)
+            {
+                cg.alpha = 0f;
+            }
+            else
+            {
+                cg.alpha = 1f;
+            }
+            // ------------------------------
+
             Image imageComponent = card.GetComponent<Image>() ?? card.GetComponentInChildren<Image>();
             if (imageComponent != null)
             {
@@ -145,6 +167,7 @@ public class SpellManager : MonoBehaviour
 
             TextMeshProUGUI textComponent = card.GetComponentInChildren<TextMeshProUGUI>();
             if (textComponent != null)
+            
             {
                 textComponent.gameObject.SetActive(false);
             }
@@ -161,22 +184,24 @@ public class SpellManager : MonoBehaviour
 
 void OnSpellClicked(string spellName, int cardIndex)
 {
-    Debug.Log($"[SpellManager] Card clicked: '{spellName}' at index {cardIndex}");
+    // 🔒 Prevent interaction during dissolve animation
+    if (_isDissolving) return;
 
     // 🔥 HANDLE HEALING SPELL FIRST — BEFORE VOICE CHECK
     if (spellName == "sau")
     {
-        Debug.Log("[SpellManager] 🟢 'Sau' detected — triggering heal!");
+        Debug.Log("[SpellManager] 🟢 'sau' detected — triggering heal!");
 
         if (PlayerHealth.Instance != null)
         {
             PlayerHealth.Instance.Heal(healAmount);
             Debug.Log("[SpellManager] ✅ Heal applied via PlayerHealth.Heal()");
             
-            // Replace card after heal
+            // Replace card after heal with animation
             currentHand[cardIndex] = GetRandomUnlockedSpell();
-            UpdateSpellUI();
-            Debug.Log("[SpellManager] 🃏 'Sau' card replaced with new spell");
+            UpdateSpellUI(cardIndex); // Pass index to animate new card
+            StartCoroutine(SlideUpRoutine(cardIndex));
+            Debug.Log("[SpellManager] 🃏 'sau' card replaced with new spell");
         }
         else
         {
@@ -206,21 +231,96 @@ void OnSpellClicked(string spellName, int cardIndex)
         {
             if (currentHand[_pendingCardIndex] == spellName)
             {
-                Debug.Log($"Replacing card at index {_pendingCardIndex} ({spellName}) with a new spell.");
-                currentHand[_pendingCardIndex] = GetRandomUnlockedSpell();
-                UpdateSpellUI();
+                StartCoroutine(DissolveRoutine(spellName));
             }
             else
             {
-                Debug.LogWarning($"Spell cast ({spellName}) does not match pending card ({currentHand[_pendingCardIndex]}) at index {_pendingCardIndex}. No card replaced.");
+                Debug.LogWarning($"Spell cast mismatch.");
             }
         }
-        else
+    }
+
+    IEnumerator DissolveRoutine(string spellName)
+    {
+        _isDissolving = true;
+        int targetIndex = _pendingCardIndex;
+        Material instanceMat = null;
+
+        if (targetIndex < spellPanel.transform.childCount)
         {
-            Debug.LogError($"OnSpellCastSuccess called with no valid pending card index ({_pendingCardIndex}).");
+            Transform cardTransform = spellPanel.transform.GetChild(targetIndex);
+            Image cardImage = cardTransform.GetComponent<Image>() ?? cardTransform.GetComponentInChildren<Image>();
+
+            if (cardImage != null && dissolveMaterial != null)
+            {
+                instanceMat = new Material(dissolveMaterial);
+                if (cardImage.sprite != null) instanceMat.SetTexture("_MainTex", cardImage.sprite.texture);
+                cardImage.material = instanceMat;
+
+                float timer = 0f;
+                while (timer < dissolveDuration)
+                {
+                    timer += Time.deltaTime;
+                    float progress = timer / dissolveDuration;
+                    instanceMat.SetFloat(dissolvePropertyName, Mathf.Lerp(0f, 1.1f, progress));
+                    yield return null;
+                }
+                instanceMat.SetFloat(dissolvePropertyName, 1.1f);
+            }
+        }
+
+        currentHand[targetIndex] = GetRandomUnlockedSpell();
+
+        // MODIFIKASI 2: Panggil UpdateSpellUI dengan memberitahu index mana yang harus disembunyikan
+        UpdateSpellUI(targetIndex);
+
+        if (instanceMat != null) Destroy(instanceMat);
+
+        StartCoroutine(SlideUpRoutine(targetIndex));
+    }
+
+    IEnumerator SlideUpRoutine(int cardIndex)
+    {
+        // Kita tetap butuh ini agar Layout Group selesai menghitung posisi X/Y yang benar
+        // Tapi sekarang user tidak melihat prosesnya karena Alpha sudah 0 dari awal.
+        yield return new WaitForEndOfFrame();
+
+        if (cardIndex < spellPanel.transform.childCount)
+        {
+            Transform cardTransform = spellPanel.transform.GetChild(cardIndex);
+            RectTransform rect = cardTransform.GetComponent<RectTransform>();
+            CanvasGroup cg = cardTransform.GetComponent<CanvasGroup>();
+            // cg pasti ada karena sudah ditambahkan di UpdateSpellUI
+
+            if (rect != null && cg != null)
+            {
+                Vector2 targetPos = rect.anchoredPosition; // Posisi final (dihitung otomatis oleh Layout Group)
+                Vector2 startPos = targetPos - new Vector2(0, slideUpDistance);
+
+                // Set posisi awal
+                rect.anchoredPosition = startPos;
+                // Alpha sudah 0 dari UpdateSpellUI, jadi aman
+
+                float timer = 0f;
+                while (timer < slideUpDuration)
+                {
+                    timer += Time.deltaTime;
+                    float rawT = Mathf.Clamp01(timer / slideUpDuration);
+                    float smoothT = rawT * rawT * (3f - 2f * rawT);
+
+                    rect.anchoredPosition = Vector2.Lerp(startPos, targetPos, smoothT);
+                    cg.alpha = Mathf.Lerp(0f, 1f, rawT); // Fade In pelan-pelan
+
+                    yield return null;
+                }
+
+                rect.anchoredPosition = targetPos;
+                cg.alpha = 1f;
+            }
         }
 
         _pendingCardIndex = -1;
+        _isDissolving = false;
     }
 
     void HideUnlockPopup()
