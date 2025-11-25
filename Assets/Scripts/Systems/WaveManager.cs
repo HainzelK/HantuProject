@@ -27,7 +27,7 @@ public class WaveManager : MonoBehaviour
     public int killsPerWave = 5;
 
     private bool isWaveActive = false;
-    private int waveNumber = 1;
+    public int waveNumber = 1;
     private int currentWaveKills = 0;
     private Coroutine spawnCoroutine;
 
