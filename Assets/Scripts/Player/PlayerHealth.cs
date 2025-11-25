@@ -10,18 +10,24 @@ public class PlayerHealth : MonoBehaviour
     public float currentHealth { get; private set; }
 
     [Header("UI")]
-    public Image fillImage; // Assign the "Fill" Image from your Canvas
+    public Image fillImage;
 
     [Header("Visual Feedback")]
     // Healing
     public bool flashOnHeal = true;
     public Color healFlashColor = new Color(0.7f, 1f, 0.7f, 1f);
-    public float healFlashDuration = 0.3f; // ✅ WAS MISSING!
+    public float healFlashDuration = 0.3f;
 
     // Damage
     public bool flashOnDamage = true;
     public Color damageFlashColor = new Color(1f, 0.7f, 0.7f, 1f);
     public float damageFlashDuration = 0.2f;
+
+    [Header("Audio")]
+    public AudioClip healSFX;      // 💚 Healing sound
+    public AudioClip damageSFX;    // 💔 Damage sound
+    public AudioClip deathSFX;     // 💀 Death sound
+    public float sfxVolume = 1f;
 
     private Coroutine activeFlashRoutine;
 
@@ -58,6 +64,12 @@ public class PlayerHealth : MonoBehaviour
 
         Debug.Log($"[PlayerHealth] 💔 Took {amount} damage! HP: {oldHealth} → {currentHealth}");
 
+        // 🔊 Play damage SFX
+        if (damageSFX != null)
+        {
+            AudioSource.PlayClipAtPoint(damageSFX, transform.position, sfxVolume);
+        }
+
         if (flashOnDamage && fillImage != null)
         {
             StartFlash(damageFlashColor, damageFlashDuration);
@@ -83,9 +95,15 @@ public class PlayerHealth : MonoBehaviour
 
         Debug.Log($"[PlayerHealth] 💚 Healed for {amount}! HP: {oldHealth} → {currentHealth}");
 
+        // 🔊 Play heal SFX
+        if (healSFX != null)
+        {
+            AudioSource.PlayClipAtPoint(healSFX, transform.position, sfxVolume);
+        }
+
         if (flashOnHeal && fillImage != null)
         {
-            StartFlash(healFlashColor, healFlashDuration); // ✅ Now works!
+            StartFlash(healFlashColor, healFlashDuration);
         }
     }
 
@@ -116,6 +134,12 @@ public class PlayerHealth : MonoBehaviour
 
     void Die()
     {
+        // 🔊 Play death SFX
+        if (deathSFX != null)
+        {
+            AudioSource.PlayClipAtPoint(deathSFX, transform.position, sfxVolume);
+        }
+
         Debug.Log("💀 PLAYER DIED!");
         // TODO: Show game over screen
     }

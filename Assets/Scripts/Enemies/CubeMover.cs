@@ -3,8 +3,8 @@ using UnityEngine;
 public class CubeMover : MonoBehaviour
 {
     public Transform target;
-    public float baseSpeed = 0.8f;
-    public float acceleration = 0.5f;
+    public float baseSpeed = 0.5f;
+    public float acceleration = 0.2f;
     public float rotateSpeed = 5f;
     public float stopDistance = 0.45f;
     public bool destroyOnReach = true;
