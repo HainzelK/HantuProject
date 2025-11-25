@@ -1,19 +1,24 @@
 using System.Collections;
 using UnityEngine;
 
-
 public class EnemyHealth : MonoBehaviour
 {
     public float maxHealth = 100f;
-
-    public Material hitMaterial;
     private float currentHealth;
     public float CurrentHealth => currentHealth;
 
-    // 🔥 Use generic name (not "cube")
+    // 🔥 Visual Feedback
+    public Material hitMaterial; // Optional: assign custom hit material
+    public Color hitFlashColor = Color.red; // Fallback if no hitMaterial
+    public float hitFlashDuration = 0.25f;
+
+    // 🔊 Audio Feedback
+    public AudioClip hitSFX;
+    public AudioClip deathSFX;
+    public float sfxVolume = 1f;
+
     private Renderer enemyRenderer;
     private Material originalMaterial;
-    public float hitFlashDuration = 0.25f;
 
     void Start()
     {
@@ -23,15 +28,22 @@ public class EnemyHealth : MonoBehaviour
         enemyRenderer = GetComponent<Renderer>();
         if (enemyRenderer != null)
         {
-            // 🔥 Cache the ORIGINAL material (do not modify it)
             originalMaterial = enemyRenderer.material;
         }
     }
 
     public void TakeDamage(float amount)
     {
+        if (amount <= 0) return;
+        
         currentHealth = Mathf.Clamp(currentHealth - amount, 0, maxHealth);
         Debug.Log($"[EnemyHealth] {name} took {amount} damage → HP: {currentHealth}");
+        
+        // 🔊 Play hit SFX
+        if (hitSFX != null)
+        {
+            AudioSource.PlayClipAtPoint(hitSFX, transform.position, sfxVolume);
+        }
         
         StartCoroutine(HitFlash());
         
@@ -39,41 +51,35 @@ public class EnemyHealth : MonoBehaviour
             Die();
     }
 
-IEnumerator HitFlash()
-{
-    Debug.Log($"[HitFlash] Started for {name}");
-    
-    if (enemyRenderer == null)
+    IEnumerator HitFlash()
     {
-        Debug.LogError($"[HitFlash] Renderer is NULL on {name}");
-        yield break;
+        if (enemyRenderer == null || originalMaterial == null) 
+            yield break;
+
+        // 🔥 Use hitMaterial if assigned, otherwise use color flash
+        Material flashMaterial = hitMaterial != null 
+            ? new Material(hitMaterial) 
+            : new Material(originalMaterial) { color = hitFlashColor };
+
+        enemyRenderer.material = flashMaterial;
+        yield return new WaitForSeconds(hitFlashDuration);
+
+        if (enemyRenderer != null)
+        {
+            enemyRenderer.material = originalMaterial;
+            Destroy(flashMaterial);
+        }
     }
-    
-    if (originalMaterial == null)
-    {
-        Debug.LogError($"[HitFlash] Original material is NULL on {name}");
-        yield break;
-    }
-
-    Material flashMaterial = new Material(originalMaterial);
-    flashMaterial.color = Color.red;
-    enemyRenderer.material = flashMaterial;
-
-    Debug.Log($"[HitFlash] Set to RED on {name}");
-
-    yield return new WaitForSeconds(hitFlashDuration);
-
-    if (enemyRenderer != null)
-    {
-        enemyRenderer.material = originalMaterial;
-        Destroy(flashMaterial);
-        Debug.Log($"[HitFlash] Restored original material on {name}");
-    }
-}
 
     void Die()
     {
-        Debug.Log($"[EnemyHealth] {name} DIED! Notifying CubeMover for death animation...");
+        Debug.Log($"[EnemyHealth] {name} DIED!");
+
+        // 🔊 Play death SFX
+        if (deathSFX != null)
+        {
+            AudioSource.PlayClipAtPoint(deathSFX, transform.position, sfxVolume);
+        }
 
         CubeMover mover = GetComponent<CubeMover>();
         if (mover != null)

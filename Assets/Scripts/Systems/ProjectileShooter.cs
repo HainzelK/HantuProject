@@ -7,6 +7,12 @@ public class ProjectileShooter : MonoBehaviour
     public GameObject waterProjectile;   // "Uwai"
     public GameObject fireProjectile;    // "Spell 3"
 
+    [Header("Audio")]
+    public AudioClip thunderSFX; // ⚡ Lette
+    public AudioClip waterSFX;   // 💧 Uwai
+    public AudioClip fireSFX;    // 🔥 Spell 3 / Api
+    public float sfxVolume = 1f;
+
     [Header("Projectile Settings")]
     public float shootForce = 12f;
     public float spawnOffset = 0.25f;
@@ -17,7 +23,7 @@ public class ProjectileShooter : MonoBehaviour
     public void TryShoot(string spellName = "Unknown")
     {
         // 🔥 SKIP HEALING SPELLS — they don't use projectiles
-        if (spellName == "sau")
+        if (spellName.Equals("sau", System.StringComparison.OrdinalIgnoreCase))
         {
             Debug.LogWarning("[ProjectileShooter] 'Sau' is a healing spell — no projectile fired.");
             return;
@@ -26,18 +32,35 @@ public class ProjectileShooter : MonoBehaviour
         // Normalize input to lowercase for robust matching
         string spellLower = spellName.ToLower();
 
-        // 🔥 SELECT PREFAB BASED ON SPELL (case-insensitive)
-        GameObject selectedPrefab = spellLower switch
+        // 🔥 SELECT PREFAB AND SFX BASED ON SPELL
+        GameObject selectedPrefab = null;
+        AudioClip selectedSFX = null;
+
+        switch (spellLower)
         {
-            "lette" or "spell 1" => thunderProjectile,
-            "uwai" or "spell 2" => waterProjectile,
-            "spell 3" or "api" => fireProjectile,
-            _ => null // ← Just return null; handle error below
-        };
+            case "lette":
+            case "spell 1":
+                selectedPrefab = thunderProjectile;
+                selectedSFX = thunderSFX;
+                break;
+            case "uwai":
+            case "spell 2":
+                selectedPrefab = waterProjectile;
+                selectedSFX = waterSFX;
+                break;
+            case "spell 3":
+            case "api":
+                selectedPrefab = fireProjectile;
+                selectedSFX = fireSFX;
+                break;
+            default:
+                Debug.LogError($"[ProjectileShooter] Unknown spell or missing prefab: '{spellName}'");
+                return;
+        }
 
         if (selectedPrefab == null)
         {
-            Debug.LogError($"[ProjectileShooter] Unknown spell or missing prefab: '{spellName}'");
+            Debug.LogError($"[ProjectileShooter] Prefab missing for spell: {spellName}!");
             return;
         }
 
@@ -68,6 +91,12 @@ public class ProjectileShooter : MonoBehaviour
 
         Destroy(proj, projectileLifetime);
         onSpellCast?.Invoke(spellName);
+
+        // 🔊 PLAY SPELL SFX
+        if (selectedSFX != null)
+        {
+            AudioSource.PlayClipAtPoint(selectedSFX, spawnPos, sfxVolume);
+        }
 
         // Debug log
         string spellType = spellLower switch

@@ -9,6 +9,18 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 59b4eb355157af04fb153fd6120a11f4, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 2.119914
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 59b4eb355157af04fb153fd6120a11f4, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 2.119914
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 59b4eb355157af04fb153fd6120a11f4, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 2.119914
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 59b4eb355157af04fb153fd6120a11f4, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
       objectReference: {fileID: 0}
@@ -138,7 +150,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maxHealth: 100
+  hitMaterial: {fileID: 0}
+  hitFlashColor: {r: 1, g: 0, b: 0, a: 1}
   hitFlashDuration: 0.25
+  hitSFX: {fileID: 8300000, guid: 62539a22e2a9b634184e5d6c99c207e7, type: 3}
+  deathSFX: {fileID: 0}
+  sfxVolume: 1
 --- !u!114 &5621664649254145621
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -152,12 +169,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   target: {fileID: 0}
-  baseSpeed: 0.8
-  acceleration: 0.5
+  baseSpeed: 0.4
+  acceleration: 0.07
   rotateSpeed: 5
   stopDistance: 0.45
   destroyOnReach: 1
-  destroyDelay: 0.5
+  destroyDelay: 1
   hitAnimationDuration: 0.3
   attackAnimationLeadTime: 2
 --- !u!114 &4772462370419068008

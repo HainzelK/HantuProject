@@ -151,7 +151,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maxHealth: 100
+  hitMaterial: {fileID: 0}
+  hitFlashColor: {r: 1, g: 0, b: 0, a: 1}
   hitFlashDuration: 0.25
+  hitSFX: {fileID: 8300000, guid: ef373551231ec3846b64015e8943e634, type: 3}
+  deathSFX: {fileID: 0}
+  sfxVolume: 1
 --- !u!114 &-90917953262581923
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -171,6 +176,8 @@ MonoBehaviour:
   stopDistance: 0.45
   destroyOnReach: 1
   destroyDelay: 0.5
+  hitAnimationDuration: 0.3
+  attackAnimationLeadTime: 2
 --- !u!114 &-3442665159341826596
 MonoBehaviour:
   m_ObjectHideFlags: 0

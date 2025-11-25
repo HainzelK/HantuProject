@@ -45,6 +45,21 @@ public class SpellManager : MonoBehaviour
     private int _pendingCardIndex = -1;
     private EdgeFlash edgeFlash;
 
+    [Header("Spell Weights")]
+    public List<SpellWeight> spellWeights = new List<SpellWeight>
+    {
+        new SpellWeight { spellName = "lette", weight = 3 },
+        new SpellWeight { spellName = "uwai", weight = 3 },
+        new SpellWeight { spellName = "sau", weight = 1 } // Less frequent!
+    };
+
+    [System.Serializable]
+    public class SpellWeight
+    {
+        public string spellName;
+        public int weight = 1; // Higher = more frequent
+    }
+
 
     void Start()
     {
