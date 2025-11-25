@@ -34,11 +34,12 @@ public class SpellManager : MonoBehaviour
     private bool _isDissolving = false;
 
     [Header("Spells")]
-    public List<string> unlockedSpells = new List<string> { "Lette", "Uwai" };
+    public List<string> unlockedSpells = new List<string> { "lette", "uwai", "sau" };
     private List<string> currentHand = new List<string>();
 
     [Header("Settings")]
     public bool requireVoiceMatch = true;
+    public float healAmount = 30f; // Configurable heal amount
 
     private int maxHandSize = 3;
     private int _pendingCardIndex = -1;
@@ -94,14 +95,31 @@ public class SpellManager : MonoBehaviour
 
     Sprite GetSpellSprite(string spellName)
     {
-        if (string.IsNullOrEmpty(spellName)) return null;
+        if (string.IsNullOrEmpty(spellName))
+        {
+            Debug.LogWarning("[SpellManager] Attempted to load sprite with null or empty spell name.");
+            return null;
+        }
+
         string path = $"Spells/{spellName}";
-        return Resources.Load<Sprite>(path);
+        Sprite sprite = Resources.Load<Sprite>(path);
+        if (sprite != null)
+        {
+            return sprite;
+        }
+
+        Texture2D tex = Resources.Load<Texture2D>(path);
+        if (tex != null)
+        {
+            Debug.LogError($"[SpellManager] Found texture at '{path}' but NOT as Sprite! Please set import type to 'Sprite (2D and UI)' for '{spellName}.png'");
+            return null;
+        }
+
+        Debug.LogError($"[SpellManager] Sprite not found for spell '{spellName}'. Expected path: 'Assets/Resources/{path}.png'");
+        return null;
     }
 
-    // MODIFIKASI 1: Tambahkan parameter optional 'indexToAnimate'
-    // Jika diisi angka >= 0, kartu di index tersebut akan langsung di-set Alpha 0
-    void UpdateSpellUI(int indexToAnimate = -1)
+    void UpdateSpellUI()
     {
         foreach (Transform child in spellPanel.transform)
         {
@@ -136,11 +154,23 @@ public class SpellManager : MonoBehaviour
             {
                 imageComponent.sprite = sprite;
                 imageComponent.preserveAspect = true;
-                imageComponent.material = null;
+
+                if (sprite != null)
+                {
+                    Debug.Log($"[SpellManager] Assigned sprite '{spellName}' to card at index {i}.");
+                }
+                else
+                {
+                    Debug.LogWarning($"[SpellManager] Assigned NULL sprite to card at index {i}.");
+                }
             }
 
             TextMeshProUGUI textComponent = card.GetComponentInChildren<TextMeshProUGUI>();
-            if (textComponent != null) textComponent.gameObject.SetActive(false);
+            if (textComponent != null)
+            
+            {
+                textComponent.gameObject.SetActive(false);
+            }
 
             Button btn = card.GetComponent<Button>();
             if (btn != null)
@@ -152,17 +182,48 @@ public class SpellManager : MonoBehaviour
         }
     }
 
-    void OnSpellClicked(string spellName, int cardIndex)
+void OnSpellClicked(string spellName, int cardIndex)
+{
+    // 🔒 Prevent interaction during dissolve animation
+    if (_isDissolving) return;
+
+    // 🔥 HANDLE HEALING SPELL FIRST — BEFORE VOICE CHECK
+    if (spellName == "sau")
     {
-        if (_isDissolving) return;
+        Debug.Log("[SpellManager] 🟢 'sau' detected — triggering heal!");
 
-        _pendingCardIndex = cardIndex;
-
-        if (requireVoiceMatch)
-            speechSpellcaster?.SetPendingSpell(spellName);
+        if (PlayerHealth.Instance != null)
+        {
+            PlayerHealth.Instance.Heal(healAmount);
+            Debug.Log("[SpellManager] ✅ Heal applied via PlayerHealth.Heal()");
+            
+            // Replace card after heal with animation
+            currentHand[cardIndex] = GetRandomUnlockedSpell();
+            UpdateSpellUI(cardIndex); // Pass index to animate new card
+            StartCoroutine(SlideUpRoutine(cardIndex));
+            Debug.Log("[SpellManager] 🃏 'sau' card replaced with new spell");
+        }
         else
-            projectileShooter?.TryShoot(spellName);
+        {
+            Debug.LogError("[SpellManager] ❌ PlayerHealth.Instance is NULL — cannot heal!");
+        }
+        return;
     }
+    
+    // 🔥 ONLY FOR ATTACK SPELLS:
+    _pendingCardIndex = cardIndex;
+
+    if (requireVoiceMatch)
+    {
+        Debug.Log($"[SpellManager] 🎤 Voice mode: setting pending spell to '{spellName}'");
+        speechSpellcaster?.SetPendingSpell(spellName);
+    }
+    else
+    {
+        Debug.Log($"[SpellManager] ⚡ Direct cast: shooting '{spellName}'");
+        projectileShooter?.TryShoot(spellName);
+    }
+}
 
     void OnSpellCastSuccess(string spellName)
     {
