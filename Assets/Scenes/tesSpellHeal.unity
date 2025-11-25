@@ -1640,10 +1640,10 @@ MonoBehaviour:
   maxHealth: 100
   fillImage: {fileID: 1841479319}
   flashOnHeal: 1
-  healFlashColor: {r: 0.7, g: 1, b: 0.7, a: 0.5}
+  healFlashColor: {r: 0.7, g: 1, b: 0.7, a: 1}
   healFlashDuration: 0.3
   flashOnDamage: 1
-  damageFlashColor: {r: 0, g: 0, b: 0, a: 1}
+  damageFlashColor: {r: 1, g: 0.7, b: 0.7, a: 1}
   damageFlashDuration: 0.2
 --- !u!136 &1678815545
 CapsuleCollider:
@@ -1700,6 +1700,11 @@ MonoBehaviour:
   indicatorPrefab: {fileID: 7960763331325118959, guid: 6287d5bbbd4a42c4c854d95f246447af, type: 3}
   arCamera: {fileID: 1678815541}
   indicatorDistanceFromEdge: 30
+  indicatorSize: {x: 150, y: 25}
+  maxOpacity: 0.8
+  fadeInDuration: 0.2
+  stayDuration: 0
+  fadeOutDuration: 1
 --- !u!4 &1791893943
 Transform:
   m_ObjectHideFlags: 0
@@ -1747,9 +1752,7 @@ MonoBehaviour:
   enemyPrefabs:
   - {fileID: 2308097063520044029, guid: 3d21f9cfdf7935b4e994a10552bd00a1, type: 3}
   - {fileID: 3546755780160334386, guid: 59f6453e6bb162b4bb4974abcfaf9999, type: 3}
-  enemyBaseSpeeds:
-  - 0.1
-  - 0.1
+  enemyBaseSpeeds: []
   enemyAccelerations: []
   playerTarget: {fileID: 1678815536}
   waveText: {fileID: 471167484}
@@ -1949,6 +1952,11 @@ MonoBehaviour:
   spellCardPrefab: {fileID: 3323988079175377717, guid: 316a759a83d4e4b4caaa87e57e4441bd, type: 3}
   unlockPopup: {fileID: 996732602}
   unlockText: {fileID: 2132513981}
+  dissolveMaterial: {fileID: 2100000, guid: 2ffbb06ae9353944cb19665f3de324f5, type: 2}
+  dissolvePropertyName: _DissolveAmount
+  dissolveDuration: 1
+  slideUpDistance: 100
+  slideUpDuration: 0.5
   unlockedSpells:
   - lette
   - uwai
