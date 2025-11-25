@@ -1348,6 +1348,7 @@ GameObject:
   - component: {fileID: 1678815543}
   - component: {fileID: 1678815544}
   - component: {fileID: 1678815545}
+  - component: {fileID: 1678815546}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -1676,6 +1677,64 @@ CapsuleCollider:
   m_Height: 1
   m_Direction: 1
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &1678815546
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1678815535}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d95c52b7436c0f94e9092465f28abd44, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  spells:
+  - spellName: api
+    variations:
+    - "\uC544\uD53C"
+    - "\uC544\uBE44"
+    - "\uC544\uC090"
+    - "\uC704"
+    - "\uC811\uC774"
+    - "\uCEE4\uD53C"
+  - spellName: lette
+    variations:
+    - "\uB808\uD14C"
+    - "\uB974\uB5BC"
+    - "\uB80C\uD2B8"
+    - "\uC5B4\uB54C"
+    - "\uB291\uB300"
+    - "\uB124"
+    - "\uC778\uB370"
+    - "\uB974\uC740\uB370"
+    - "\uADF8\uB798"
+    - "\uB86F\uB370"
+    - "\uB54C"
+    - "\uBA87 \uC5D0"
+    - "\uB7A9?"
+    - "\uB2A6\uB124"
+  - spellName: uwai
+    variations:
+    - "\uC6B0\uC560"
+    - "\uBB50\uD574"
+    - "\uC65C"
+    - 5
+    - "\uC624\uC640\uC774"
+    - "\uBAA8\uC544\uC774"
+    - "\uC624\uD6C4\uC5D0"
+    - "\uBB50\uC57C"
+    - "\uBB50\uAC00 \uD574"
+    - "\uBB50\uD558\uC774"
+    - "\uC544 \uC77C"
+    - "\uC653"
+  - spellName: sau
+    variations:
+    - "\uC2F8\uC6B0"
+    - "\uC544\uC6B0"
+    - "\uC751"
+  koreanAsrModelID: sherpa-onnx-zipformer-korean-2024-06-24
+  vadModelID: silero_vad_v5
 --- !u!1 &1791893941
 GameObject:
   m_ObjectHideFlags: 0
@@ -1965,22 +2024,17 @@ MonoBehaviour:
   unlockText: {fileID: 2132513981}
   dissolveMaterial: {fileID: 2100000, guid: 2ffbb06ae9353944cb19665f3de324f5, type: 2}
   dissolvePropertyName: _DissolveAmount
-  dissolveDuration: 1
+  dissolveDuration: 0.8
   slideUpDistance: 100
   slideUpDuration: 0.1
+  aksaraDisplayDuration: 0.2
+  aksaraFadeDuration: 0.5
   unlockedSpells:
   - lette
   - uwai
   - sau
-  requireVoiceMatch: 0
+  requireVoiceMatch: 1
   healAmount: 30
-  spellWeights:
-  - spellName: lette
-    weight: 3
-  - spellName: uwai
-    weight: 3
-  - spellName: sau
-    weight: 1
 --- !u!4 &1848135152
 Transform:
   m_ObjectHideFlags: 0

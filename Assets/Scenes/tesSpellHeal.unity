@@ -1622,6 +1622,10 @@ MonoBehaviour:
   thunderProjectile: {fileID: 3700114904341803050, guid: 2758c65efea0aa64690f86b7be226fd0, type: 3}
   waterProjectile: {fileID: 6670577681840426803, guid: 08102fe7341039749ba6745378055670, type: 3}
   fireProjectile: {fileID: 4000667520668516784, guid: aada56a3c80e61647a32a51baa0aefef, type: 3}
+  thunderSFX: {fileID: 0}
+  waterSFX: {fileID: 0}
+  fireSFX: {fileID: 0}
+  sfxVolume: 1
   shootForce: 10
   spawnOffset: -0.6
   projectileLifetime: 8
@@ -1645,6 +1649,10 @@ MonoBehaviour:
   flashOnDamage: 1
   damageFlashColor: {r: 1, g: 0.7, b: 0.7, a: 1}
   damageFlashDuration: 0.2
+  healSFX: {fileID: 0}
+  damageSFX: {fileID: 0}
+  deathSFX: {fileID: 0}
+  sfxVolume: 1
 --- !u!136 &1678815545
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -1765,6 +1773,7 @@ MonoBehaviour:
   baseEnemyHp: 100
   hpPerWave: 30
   killsPerWave: 5
+  waveNumber: 1
 --- !u!4 &1800763665
 Transform:
   m_ObjectHideFlags: 0
@@ -1957,6 +1966,7 @@ MonoBehaviour:
   dissolveDuration: 1
   slideUpDistance: 100
   slideUpDuration: 0.5
+  aksaraDisplayDuration: 1
   unlockedSpells:
   - lette
   - uwai
