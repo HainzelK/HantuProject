@@ -19,6 +19,18 @@ public class SpellManager : MonoBehaviour
     public GameObject spellCardPrefab;
     public GameObject unlockPopup;
     public TextMeshProUGUI unlockText;
+    public Image spellImage; // ← NEW: Spell icon in popup
+
+    // Add this field to your SpellManager class
+    [Header("Spell Icons")]
+    public List<SpellIcon> spellIcons = new List<SpellIcon>();
+
+    [System.Serializable]
+    public class SpellIcon
+    {
+        public string spellName;
+        public Sprite icon;
+    }
 
     [Header("Dissolve Settings")]
     public Material dissolveMaterial;
@@ -32,13 +44,12 @@ public class SpellManager : MonoBehaviour
     public float slideUpDuration = 0.5f;
 
     [Header("Aksara Animation Settings")]
-    public float aksaraDisplayDuration = 1.0f; // Durasi aksara tampil sebelum aksi
-    public float aksaraFadeDuration = 0.5f; // Durasi fade in/out
+    public float aksaraDisplayDuration = 1.0f;
+    public float aksaraFadeDuration = 0.5f;
 
     private GameObject _currentAksaraInstance = null;
-
     private bool _isDissolving = false;
-    private bool _isAnimatingAksara = false; // Mencegah spam klik saat animasi berjalan
+    private bool _isAnimatingAksara = false;
 
     [Header("Spells")]
     public List<string> unlockedSpells = new List<string> { "lette", "uwai", "sau" };
@@ -51,7 +62,6 @@ public class SpellManager : MonoBehaviour
     private int maxHandSize = 3;
     private int _pendingCardIndex = -1;
     private EdgeFlash edgeFlash;
-
 
     void Start()
     {
@@ -73,14 +83,33 @@ public class SpellManager : MonoBehaviour
         }
     }
 
-    void ShowUnlockPopup(string spellName)
+void ShowUnlockPopup(string spellName)
+{
+    unlockText.text = $"Mantra Baru!";
+    
+    // 🔥 GET SPELL ICON FROM ASSIGNED LIST
+    Sprite spellSprite = null;
+    var iconEntry = spellIcons.Find(icon => icon.spellName == spellName);
+    if (iconEntry != null)
     {
-        unlockText.text = $"New Spell Unlocked!\n{spellName}";
-        foreach (var ui in uiToHide) if (ui != null) ui.SetActive(false);
-        Time.timeScale = 0f;
-        unlockPopup.SetActive(true);
+        spellSprite = iconEntry.icon;
     }
 
+    if (spellSprite != null && spellImage != null)
+    {
+        spellImage.sprite = spellSprite;
+        spellImage.enabled = true;
+    }
+    else
+    {
+        if (spellImage != null) spellImage.enabled = false;
+        Debug.LogWarning($"[SpellManager] Spell icon not assigned for: {spellName}");
+    }
+
+    foreach (var ui in uiToHide) if (ui != null) ui.SetActive(false);
+    Time.timeScale = 0f;
+    unlockPopup.SetActive(true);
+}
     public void OnCloseUnlockPopup()
     {
         unlockPopup.SetActive(false);
@@ -153,13 +182,10 @@ public class SpellManager : MonoBehaviour
         }
     }
 
-    // --- BAGIAN UTAMA (MODIFIED) ---
-
     void OnSpellClicked(string spellName, int cardIndex)
     {
         if (_isDissolving || _isAnimatingAksara) return;
 
-        // Simpan index kartu yang sedang diproses
         _pendingCardIndex = cardIndex;
 
         if (requireVoiceMatch)
@@ -172,9 +198,6 @@ public class SpellManager : MonoBehaviour
         }
     }
 
-    // Method ini dipanggil oleh:
-    // 1. OnSpellClicked (jika voice match OFF)
-    // 2. SpeechSpellcaster (jika voice match ON dan cocok)
     public void CastSpellWithAksara(string spellName)
     {
         StartCoroutine(ShowAksaraAndCast(spellName));
@@ -184,12 +207,8 @@ public class SpellManager : MonoBehaviour
     {
         _isAnimatingAksara = true;
 
-        // --- PERUBAHAN DI SINI ---
-        // Panggil aksi (Shoot/Heal) LANGSUNG di awal, jangan menunggu animasi visual
         ExecuteSpellAction(spellName);
-        // -------------------------
 
-        // 1. Bersihkan Aksara lama jika ada
         if (_currentAksaraInstance != null) Destroy(_currentAksaraInstance);
 
         string cleanName = spellName.ToLower();
@@ -200,20 +219,15 @@ public class SpellManager : MonoBehaviour
         {
             float displayDistance = 1.5f;
             Vector3 spawnPos = playerCamera.position + playerCamera.forward * displayDistance;
-
-            // Rotasi kamera, diputar 180 derajat di sumbu Y (agar menghadap pemain)
             Quaternion spawnRot = playerCamera.rotation * Quaternion.Euler(0, 180f, 0);
 
             _currentAksaraInstance = Instantiate(aksaraPrefab, spawnPos, spawnRot);
             _currentAksaraInstance.transform.SetParent(playerCamera);
 
             Transform model = _currentAksaraInstance.transform;
-
-            // Setup Awal
             model.localScale = Vector3.zero;
             SetAksaraAlpha(_currentAksaraInstance, 0f);
 
-            // --- ANIMASI FADE IN & POP UP ---
             float elapsed = 0f;
             Vector3 targetScale = Vector3.one * 0.5f;
 
@@ -221,15 +235,10 @@ public class SpellManager : MonoBehaviour
             {
                 elapsed += Time.deltaTime;
                 float t = elapsed / aksaraFadeDuration;
-
-                // Animasi Scale
                 float scaleCurve = Mathf.Sin(t * Mathf.PI * 0.5f) * 1.1f;
                 if (t >= 1f) scaleCurve = 1f;
                 model.localScale = Vector3.Lerp(Vector3.zero, targetScale, scaleCurve);
-
-                // Animasi Alpha
                 SetAksaraAlpha(_currentAksaraInstance, Mathf.Lerp(0f, 1f, t));
-
                 yield return null;
             }
             model.localScale = targetScale;
@@ -240,12 +249,8 @@ public class SpellManager : MonoBehaviour
             if (aksaraPrefab == null) Debug.LogWarning($"[SpellManager] Aksara prefab not found: {path}");
         }
 
-        // 2. Tunggu (Display Duration) - Aksara tetap tampil sebentar sebagai efek visual
         yield return new WaitForSeconds(aksaraDisplayDuration);
 
-        // (ExecuteSpellAction sudah dipanggil di atas, jadi baris di sini dihapus)
-
-        // 3. --- ANIMASI FADE OUT ---
         if (_currentAksaraInstance != null)
         {
             float fadeOutElapsed = 0f;
@@ -257,15 +262,12 @@ public class SpellManager : MonoBehaviour
             {
                 fadeOutElapsed += Time.deltaTime;
                 float t = fadeOutElapsed / aksaraFadeDuration;
-
                 SetAksaraAlpha(_currentAksaraInstance, Mathf.Lerp(startAlpha, 0f, t));
                 _currentAksaraInstance.transform.localScale = Vector3.Lerp(startScale, endScale, t);
-
                 yield return null;
             }
         }
 
-        // 4. Cleanup
         if (_currentAksaraInstance != null)
         {
             Destroy(_currentAksaraInstance);
@@ -284,14 +286,13 @@ public class SpellManager : MonoBehaviour
         {
             foreach (Material m in r.materials)
             {
-                // Cek property warna standar (URP biasanya _BaseColor, Built-in biasanya _Color)
                 if (m.HasProperty("_BaseColor")) // URP
                 {
                     Color c = m.GetColor("_BaseColor");
                     c.a = alpha;
                     m.SetColor("_BaseColor", c);
                 }
-                else if (m.HasProperty("_Color")) // Standard / Built-in
+                else if (m.HasProperty("_Color")) // Standard
                 {
                     Color c = m.color;
                     c.a = alpha;
@@ -322,7 +323,6 @@ public class SpellManager : MonoBehaviour
 
     void OnSpellCastSuccess(string spellName)
     {
-        // Callback ini dipanggil oleh ProjectileShooter
         if (_pendingCardIndex >= 0 && _pendingCardIndex < currentHand.Count)
         {
             if (currentHand[_pendingCardIndex] == spellName)
@@ -332,7 +332,6 @@ public class SpellManager : MonoBehaviour
         }
     }
 
-    // --- LOGIKA DISSOLVE & CARD REPLACEMENT ---
     IEnumerator DissolveRoutine(string spellName)
     {
         _isDissolving = true;
@@ -363,7 +362,7 @@ public class SpellManager : MonoBehaviour
         }
 
         currentHand[targetIndex] = GetRandomUnlockedSpell();
-        UpdateSpellUI(targetIndex); // Kartu baru dibuat invisible (alpha 0)
+        UpdateSpellUI(targetIndex);
 
         if (instanceMat != null) Destroy(instanceMat);
 
