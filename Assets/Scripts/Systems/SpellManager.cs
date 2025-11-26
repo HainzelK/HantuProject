@@ -184,6 +184,11 @@ public class SpellManager : MonoBehaviour
     {
         _isAnimatingAksara = true;
 
+        // --- PERUBAHAN DI SINI ---
+        // Panggil aksi (Shoot/Heal) LANGSUNG di awal, jangan menunggu animasi visual
+        ExecuteSpellAction(spellName);
+        // -------------------------
+
         // 1. Bersihkan Aksara lama jika ada
         if (_currentAksaraInstance != null) Destroy(_currentAksaraInstance);
 
@@ -196,41 +201,37 @@ public class SpellManager : MonoBehaviour
             float displayDistance = 1.5f;
             Vector3 spawnPos = playerCamera.position + playerCamera.forward * displayDistance;
 
-            // --- MODIFIKASI ROTASI ---
-            // Mengambil rotasi kamera, lalu diputar 180 derajat di sumbu Z (Roll) untuk membalik atas-bawah
+            // Rotasi kamera, diputar 180 derajat di sumbu Y (agar menghadap pemain)
             Quaternion spawnRot = playerCamera.rotation * Quaternion.Euler(0, 180f, 0);
 
             _currentAksaraInstance = Instantiate(aksaraPrefab, spawnPos, spawnRot);
-
-            // Jadikan child dari kamera agar ikut bergerak saat pemain menoleh (opsional, hapus jika tidak ingin ikut)
             _currentAksaraInstance.transform.SetParent(playerCamera);
 
             Transform model = _currentAksaraInstance.transform;
 
-            // Setup Awal: Ukuran 0 dan Transparan
+            // Setup Awal
             model.localScale = Vector3.zero;
             SetAksaraAlpha(_currentAksaraInstance, 0f);
 
             // --- ANIMASI FADE IN & POP UP ---
             float elapsed = 0f;
-            Vector3 targetScale = Vector3.one * 0.5f; // Ukuran target
+            Vector3 targetScale = Vector3.one * 0.5f;
 
             while (elapsed < aksaraFadeDuration)
             {
                 elapsed += Time.deltaTime;
                 float t = elapsed / aksaraFadeDuration;
 
-                // Animasi Scale (Overshoot sedikit biar kenyal)
+                // Animasi Scale
                 float scaleCurve = Mathf.Sin(t * Mathf.PI * 0.5f) * 1.1f;
                 if (t >= 1f) scaleCurve = 1f;
                 model.localScale = Vector3.Lerp(Vector3.zero, targetScale, scaleCurve);
 
-                // Animasi Alpha (0 ke 1)
+                // Animasi Alpha
                 SetAksaraAlpha(_currentAksaraInstance, Mathf.Lerp(0f, 1f, t));
 
                 yield return null;
             }
-            // Pastikan nilai akhir set
             model.localScale = targetScale;
             SetAksaraAlpha(_currentAksaraInstance, 1f);
         }
@@ -239,36 +240,32 @@ public class SpellManager : MonoBehaviour
             if (aksaraPrefab == null) Debug.LogWarning($"[SpellManager] Aksara prefab not found: {path}");
         }
 
-        // 2. Tunggu (Display Duration)
+        // 2. Tunggu (Display Duration) - Aksara tetap tampil sebentar sebagai efek visual
         yield return new WaitForSeconds(aksaraDisplayDuration);
 
-        // 3. Eksekusi Efek Spell (Attack / Heal)
-        ExecuteSpellAction(spellName);
+        // (ExecuteSpellAction sudah dipanggil di atas, jadi baris di sini dihapus)
 
-        // 4. --- ANIMASI FADE OUT ---
+        // 3. --- ANIMASI FADE OUT ---
         if (_currentAksaraInstance != null)
         {
             float fadeOutElapsed = 0f;
             float startAlpha = 1f;
             Vector3 startScale = _currentAksaraInstance.transform.localScale;
-            Vector3 endScale = startScale * 1.2f; // Sedikit membesar saat menghilang
+            Vector3 endScale = startScale * 1.2f;
 
             while (fadeOutElapsed < aksaraFadeDuration)
             {
                 fadeOutElapsed += Time.deltaTime;
                 float t = fadeOutElapsed / aksaraFadeDuration;
 
-                // Lerp Alpha (1 ke 0)
                 SetAksaraAlpha(_currentAksaraInstance, Mathf.Lerp(startAlpha, 0f, t));
-
-                // Lerp Scale (Membesar sedikit)
                 _currentAksaraInstance.transform.localScale = Vector3.Lerp(startScale, endScale, t);
 
                 yield return null;
             }
         }
 
-        // 5. Cleanup
+        // 4. Cleanup
         if (_currentAksaraInstance != null)
         {
             Destroy(_currentAksaraInstance);
