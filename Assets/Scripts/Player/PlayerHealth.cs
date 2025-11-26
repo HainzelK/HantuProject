@@ -31,6 +31,10 @@ public class PlayerHealth : MonoBehaviour
 
     private Coroutine activeFlashRoutine;
 
+
+    public GameManager gameManager;
+    private bool isDead;
+
     void Awake()
     {
         if (Instance != null && Instance != this)
@@ -75,8 +79,10 @@ public class PlayerHealth : MonoBehaviour
             StartFlash(damageFlashColor, damageFlashDuration);
         }
 
-        if (currentHealth <= 0)
+        if (currentHealth <= 0 && !isDead)
         {
+            isDead = true;
+            gameManager.GameOver();
             Die();
         }
     }
