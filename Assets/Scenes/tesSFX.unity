@@ -2127,12 +2127,12 @@ MonoBehaviour:
     - "\uBA87 \uC5D0"
     - "\uB7A9?"
     - "\uB2A6\uB124"
+    - "\uBA87 \uB144"
   - spellName: uwai
     variations:
     - "\uC6B0\uC560"
     - "\uBB50\uD574"
     - "\uC65C"
-    - 5
     - "\uC624\uC640\uC774"
     - "\uBAA8\uC544\uC774"
     - "\uC624\uD6C4\uC5D0"
@@ -2141,13 +2141,22 @@ MonoBehaviour:
     - "\uBB50\uD558\uC774"
     - "\uC544 \uC77C"
     - "\uC653"
+    - "\uB178\uD558\uC778?"
   - spellName: sau
     variations:
     - "\uC2F8\uC6B0"
     - "\uC544\uC6B0"
     - "\uC751"
+    - "\uC5B4"
+    - "\uB098"
+    - "\uADF8\uB7FC"
+    - "\uBE0C\uB77C\uC6B0"
+    - "\uBD80\uD0C1"
+  - spellName: sau
+    variations:
+    - 
   koreanAsrModelID: sherpa-onnx-zipformer-korean-2024-06-24
-  vadModelID: silero_vad_v5
+  vadModelID: ten-vad
 --- !u!1 &1791893941
 GameObject:
   m_ObjectHideFlags: 0
@@ -2435,6 +2444,8 @@ MonoBehaviour:
   spellCardPrefab: {fileID: 3323988079175377717, guid: 316a759a83d4e4b4caaa87e57e4441bd, type: 3}
   unlockPopup: {fileID: 996732602}
   unlockText: {fileID: 2132513981}
+  normalColor: {r: 1, g: 1, b: 1, a: 1}
+  selectedColor: {r: 0.7075472, g: 0.7075472, b: 0.7075472, a: 1}
   dissolveMaterial: {fileID: 2100000, guid: 2ffbb06ae9353944cb19665f3de324f5, type: 2}
   dissolvePropertyName: _DissolveAmount
   dissolveDuration: 0.8

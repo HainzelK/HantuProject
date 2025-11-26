@@ -20,25 +20,27 @@ public class SpellManager : MonoBehaviour
     public GameObject unlockPopup;
     public TextMeshProUGUI unlockText;
 
+    // [BARU] Pengaturan Warna Seleksi
+    [Header("Card Selection Visuals")]
+    public Color normalColor = Color.white;
+    public Color selectedColor = new Color(0.5f, 0.5f, 0.5f, 1f); // Lebih gelap (abu-abu)
+
     [Header("Dissolve Settings")]
     public Material dissolveMaterial;
     public string dissolvePropertyName = "_DissolveAmount";
     public float dissolveDuration = 1.0f;
 
     [Header("Spawn Settings")]
-    [Tooltip("Jarak kartu turun ke bawah sebelum naik")]
     public float slideUpDistance = 100f;
-    [Tooltip("Durasi animasi kartu naik dan fade in")]
     public float slideUpDuration = 0.5f;
 
     [Header("Aksara Animation Settings")]
-    public float aksaraDisplayDuration = 1.0f; // Durasi aksara tampil sebelum aksi
-    public float aksaraFadeDuration = 0.5f; // Durasi fade in/out
+    public float aksaraDisplayDuration = 1.0f;
+    public float aksaraFadeDuration = 0.5f;
 
     private GameObject _currentAksaraInstance = null;
-
     private bool _isDissolving = false;
-    private bool _isAnimatingAksara = false; // Mencegah spam klik saat animasi berjalan
+    private bool _isAnimatingAksara = false;
 
     [Header("Spells")]
     public List<string> unlockedSpells = new List<string> { "lette", "uwai", "sau" };
@@ -50,6 +52,10 @@ public class SpellManager : MonoBehaviour
 
     private int maxHandSize = 3;
     private int _pendingCardIndex = -1;
+
+    // [BARU] Melacak kartu mana yang sedang aktif dipilih secara visual
+    private int _selectedCardIndex = -1;
+
     private EdgeFlash edgeFlash;
 
 
@@ -112,6 +118,9 @@ public class SpellManager : MonoBehaviour
 
     void UpdateSpellUI(int indexToAnimate = -1)
     {
+        // Reset selection index karena UI di-build ulang
+        _selectedCardIndex = -1;
+
         foreach (Transform child in spellPanel.transform)
         {
             Destroy(child.gameObject);
@@ -138,6 +147,7 @@ public class SpellManager : MonoBehaviour
                 imageComponent.sprite = sprite;
                 imageComponent.preserveAspect = true;
                 imageComponent.material = null;
+                imageComponent.color = normalColor; // Set warna awal normal
             }
 
             TextMeshProUGUI textComponent = card.GetComponentInChildren<TextMeshProUGUI>();
@@ -159,6 +169,17 @@ public class SpellManager : MonoBehaviour
     {
         if (_isDissolving || _isAnimatingAksara) return;
 
+        // [BARU] Logika Swap Selection
+        // 1. Jika ada kartu lain yang sebelumnya dipilih, kembalikan warnanya ke normal
+        if (_selectedCardIndex != -1 && _selectedCardIndex != cardIndex)
+        {
+            SetCardColor(_selectedCardIndex, normalColor);
+        }
+
+        // 2. Set kartu yang baru diklik menjadi gelap (Selected)
+        _selectedCardIndex = cardIndex;
+        SetCardColor(cardIndex, selectedColor);
+
         // Simpan index kartu yang sedang diproses
         _pendingCardIndex = cardIndex;
 
@@ -172,24 +193,45 @@ public class SpellManager : MonoBehaviour
         }
     }
 
-    // Method ini dipanggil oleh:
-    // 1. OnSpellClicked (jika voice match OFF)
-    // 2. SpeechSpellcaster (jika voice match ON dan cocok)
+    // [BARU] Helper untuk mengubah warna kartu berdasarkan index
+    void SetCardColor(int index, Color color)
+    {
+        if (index >= 0 && index < spellPanel.transform.childCount)
+        {
+            Transform card = spellPanel.transform.GetChild(index);
+            Image img = card.GetComponent<Image>() ?? card.GetComponentInChildren<Image>();
+            if (img != null)
+            {
+                img.color = color;
+            }
+        }
+    }
+
+    // [BARU] Fungsi Public untuk mereset seleksi (Dipanggil SpeechSpellcaster saat gagal)
+    public void ResetSelection()
+    {
+        if (_selectedCardIndex != -1)
+        {
+            SetCardColor(_selectedCardIndex, normalColor);
+            _selectedCardIndex = -1;
+            _pendingCardIndex = -1;
+        }
+    }
+
     public void CastSpellWithAksara(string spellName)
     {
+        // [BARU] Jika berhasil cast, kita reset visual seleksi agar tidak stuck gelap
+        // (Opsional: biarkan gelap sampai dissolve, tapi lebih aman di-reset atau biarkan logic dissolve menanganinya)
+        // Di sini saya biarkan logic dissolve yang akan me-refresh UI.
+
         StartCoroutine(ShowAksaraAndCast(spellName));
     }
 
     IEnumerator ShowAksaraAndCast(string spellName)
     {
         _isAnimatingAksara = true;
-
-        // --- PERUBAHAN DI SINI ---
-        // Panggil aksi (Shoot/Heal) LANGSUNG di awal, jangan menunggu animasi visual
         ExecuteSpellAction(spellName);
-        // -------------------------
 
-        // 1. Bersihkan Aksara lama jika ada
         if (_currentAksaraInstance != null) Destroy(_currentAksaraInstance);
 
         string cleanName = spellName.ToLower();
@@ -200,20 +242,15 @@ public class SpellManager : MonoBehaviour
         {
             float displayDistance = 1.5f;
             Vector3 spawnPos = playerCamera.position + playerCamera.forward * displayDistance;
-
-            // Rotasi kamera, diputar 180 derajat di sumbu Y (agar menghadap pemain)
             Quaternion spawnRot = playerCamera.rotation * Quaternion.Euler(0, 180f, 0);
 
             _currentAksaraInstance = Instantiate(aksaraPrefab, spawnPos, spawnRot);
             _currentAksaraInstance.transform.SetParent(playerCamera);
-
             Transform model = _currentAksaraInstance.transform;
 
-            // Setup Awal
             model.localScale = Vector3.zero;
             SetAksaraAlpha(_currentAksaraInstance, 0f);
 
-            // --- ANIMASI FADE IN & POP UP ---
             float elapsed = 0f;
             Vector3 targetScale = Vector3.one * 0.5f;
 
@@ -221,31 +258,18 @@ public class SpellManager : MonoBehaviour
             {
                 elapsed += Time.deltaTime;
                 float t = elapsed / aksaraFadeDuration;
-
-                // Animasi Scale
                 float scaleCurve = Mathf.Sin(t * Mathf.PI * 0.5f) * 1.1f;
                 if (t >= 1f) scaleCurve = 1f;
                 model.localScale = Vector3.Lerp(Vector3.zero, targetScale, scaleCurve);
-
-                // Animasi Alpha
                 SetAksaraAlpha(_currentAksaraInstance, Mathf.Lerp(0f, 1f, t));
-
                 yield return null;
             }
             model.localScale = targetScale;
             SetAksaraAlpha(_currentAksaraInstance, 1f);
         }
-        else
-        {
-            if (aksaraPrefab == null) Debug.LogWarning($"[SpellManager] Aksara prefab not found: {path}");
-        }
 
-        // 2. Tunggu (Display Duration) - Aksara tetap tampil sebentar sebagai efek visual
         yield return new WaitForSeconds(aksaraDisplayDuration);
 
-        // (ExecuteSpellAction sudah dipanggil di atas, jadi baris di sini dihapus)
-
-        // 3. --- ANIMASI FADE OUT ---
         if (_currentAksaraInstance != null)
         {
             float fadeOutElapsed = 0f;
@@ -257,15 +281,12 @@ public class SpellManager : MonoBehaviour
             {
                 fadeOutElapsed += Time.deltaTime;
                 float t = fadeOutElapsed / aksaraFadeDuration;
-
                 SetAksaraAlpha(_currentAksaraInstance, Mathf.Lerp(startAlpha, 0f, t));
                 _currentAksaraInstance.transform.localScale = Vector3.Lerp(startScale, endScale, t);
-
                 yield return null;
             }
         }
 
-        // 4. Cleanup
         if (_currentAksaraInstance != null)
         {
             Destroy(_currentAksaraInstance);
@@ -278,20 +299,18 @@ public class SpellManager : MonoBehaviour
     void SetAksaraAlpha(GameObject obj, float alpha)
     {
         if (obj == null) return;
-
         Renderer[] renderers = obj.GetComponentsInChildren<Renderer>();
         foreach (Renderer r in renderers)
         {
             foreach (Material m in r.materials)
             {
-                // Cek property warna standar (URP biasanya _BaseColor, Built-in biasanya _Color)
-                if (m.HasProperty("_BaseColor")) // URP
+                if (m.HasProperty("_BaseColor"))
                 {
                     Color c = m.GetColor("_BaseColor");
                     c.a = alpha;
                     m.SetColor("_BaseColor", c);
                 }
-                else if (m.HasProperty("_Color")) // Standard / Built-in
+                else if (m.HasProperty("_Color"))
                 {
                     Color c = m.color;
                     c.a = alpha;
@@ -305,7 +324,6 @@ public class SpellManager : MonoBehaviour
     {
         if (spellName == "sau")
         {
-            Debug.Log("[SpellManager] 🟢 Executing 'sau' (Heal)");
             if (PlayerHealth.Instance != null)
             {
                 PlayerHealth.Instance.Heal(healAmount);
@@ -315,14 +333,12 @@ public class SpellManager : MonoBehaviour
         }
         else
         {
-            Debug.Log($"[SpellManager] 🔥 Executing '{spellName}' (Attack)");
             projectileShooter?.TryShoot(spellName);
         }
     }
 
     void OnSpellCastSuccess(string spellName)
     {
-        // Callback ini dipanggil oleh ProjectileShooter
         if (_pendingCardIndex >= 0 && _pendingCardIndex < currentHand.Count)
         {
             if (currentHand[_pendingCardIndex] == spellName)
@@ -332,7 +348,6 @@ public class SpellManager : MonoBehaviour
         }
     }
 
-    // --- LOGIKA DISSOLVE & CARD REPLACEMENT ---
     IEnumerator DissolveRoutine(string spellName)
     {
         _isDissolving = true;
@@ -350,6 +365,9 @@ public class SpellManager : MonoBehaviour
                 if (cardImage.sprite != null) instanceMat.SetTexture("_MainTex", cardImage.sprite.texture);
                 cardImage.material = instanceMat;
 
+                // Pastikan warna putih saat dissolve agar shader terlihat benar
+                cardImage.color = Color.white;
+
                 float timer = 0f;
                 while (timer < dissolveDuration)
                 {
@@ -363,7 +381,7 @@ public class SpellManager : MonoBehaviour
         }
 
         currentHand[targetIndex] = GetRandomUnlockedSpell();
-        UpdateSpellUI(targetIndex); // Kartu baru dibuat invisible (alpha 0)
+        UpdateSpellUI(targetIndex); // Ini akan me-reset _selectedCardIndex ke -1
 
         if (instanceMat != null) Destroy(instanceMat);
 
@@ -373,7 +391,6 @@ public class SpellManager : MonoBehaviour
     IEnumerator SlideUpRoutine(int cardIndex)
     {
         yield return new WaitForEndOfFrame();
-
         if (cardIndex < spellPanel.transform.childCount)
         {
             Transform cardTransform = spellPanel.transform.GetChild(cardIndex);
@@ -384,7 +401,6 @@ public class SpellManager : MonoBehaviour
             {
                 Vector2 targetPos = rect.anchoredPosition;
                 Vector2 startPos = targetPos - new Vector2(0, slideUpDistance);
-
                 rect.anchoredPosition = startPos;
 
                 float timer = 0f;
@@ -393,18 +409,14 @@ public class SpellManager : MonoBehaviour
                     timer += Time.deltaTime;
                     float rawT = Mathf.Clamp01(timer / slideUpDuration);
                     float smoothT = rawT * rawT * (3f - 2f * rawT);
-
                     rect.anchoredPosition = Vector2.Lerp(startPos, targetPos, smoothT);
                     cg.alpha = Mathf.Lerp(0f, 1f, rawT);
-
                     yield return null;
                 }
-
                 rect.anchoredPosition = targetPos;
                 cg.alpha = 1f;
             }
         }
-
         _pendingCardIndex = -1;
         _isDissolving = false;
     }

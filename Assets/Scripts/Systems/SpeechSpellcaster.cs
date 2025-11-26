@@ -1,3 +1,4 @@
+// SpeechSpellcaster.cs
 using UnityEngine;
 using System.Linq;
 using Eitan.SherpaOnnxUnity.Runtime;
@@ -20,13 +21,12 @@ public class SpeechSpellcaster : MonoBehaviour
 
     [Header("Model Config")]
     [SerializeField] private string koreanAsrModelID = "sherpa-onnx-zipformer-korean-2024-06-24";
-    [SerializeField] private string vadModelID = "silero_vad_v5";
+    [SerializeField] private string vadModelID = "ten-vad";
 
     private SpeechRecognition speechRecognizer;
     private VoiceActivityDetection vad;
     private ProjectileShooter projectileShooter;
 
-    // REFERENCE KE SPELL MANAGER
     private SpellManager spellManager;
 
     private AudioClip micClip;
@@ -40,13 +40,12 @@ public class SpeechSpellcaster : MonoBehaviour
 
     void Start()
     {
-        // Cari SpellManager
         spellManager = FindObjectOfType<SpellManager>();
         if (spellManager == null) Debug.LogWarning("SpellManager not found!");
 
         projectileShooter = GetComponent<ProjectileShooter>();
         if (projectileShooter == null)
-            Debug.LogError("ProjectileShooter tidak ditemukan! Tambahkan script ProjectileShooter ke kamera!");
+            Debug.LogError("ProjectileShooter tidak ditemukan!");
 
         StartCoroutine(Init());
     }
@@ -62,8 +61,7 @@ public class SpeechSpellcaster : MonoBehaviour
         vad = new VoiceActivityDetection(vadModelID, SAMPLE_RATE);
         vad.OnSpeechSegmentDetected += HandleSpeechDetected;
 
-        // [LOG DIKEMBALIKAN]
-        Debug.Log("Speech system initialized. Menunggu spell dipilih...");
+        Debug.Log("Speech system initialized.");
     }
 
     void Update()
@@ -76,9 +74,6 @@ public class SpeechSpellcaster : MonoBehaviour
         }
     }
 
-    // ===============================================
-    //   Microphone Recorder (Universal)
-    // ===============================================
     void StartListening()
     {
         if (_isListening) return;
@@ -87,7 +82,6 @@ public class SpeechSpellcaster : MonoBehaviour
         micClip = Microphone.Start(null, true, 1, SAMPLE_RATE);
         _isListening = true;
 
-        // [LOG DIKEMBALIKAN]
         Debug.Log("[Mic] Mulai mendengarkan (16kHz)");
         InvokeRepeating(nameof(PullMicFrames), 0.1f, 0.1f);
     }
@@ -98,8 +92,6 @@ public class SpeechSpellcaster : MonoBehaviour
         CancelInvoke(nameof(PullMicFrames));
         if (micClip != null) { Microphone.End(null); micClip = null; }
         _isListening = false;
-
-        // [LOG DIKEMBALIKAN]
         Debug.Log("[Mic] Berhenti mendengarkan.");
     }
 
@@ -113,16 +105,10 @@ public class SpeechSpellcaster : MonoBehaviour
         vad.StreamDetect(buffer);
     }
 
-    // ===============================================
-    //   VAD → ASR
-    // ===============================================
     private void HandleSpeechDetected(float[] segment)
     {
         if (isTranscribing) return;
         if (segment == null || segment.Length < SAMPLE_RATE * 0.2f) return;
-
-        // [LOG DIKEMBALIKAN]
-        Debug.Log($"[VAD] speech ({segment.Length} samples)");
         _ = Transcribe(segment);
     }
 
@@ -132,18 +118,12 @@ public class SpeechSpellcaster : MonoBehaviour
         try
         {
             string txt = await speechRecognizer.SpeechTranscriptionAsync(pcm, SAMPLE_RATE);
-
-            // [LOG DIKEMBALIKAN]
             Debug.Log("[ASR] => " + txt);
-
             if (!string.IsNullOrWhiteSpace(txt)) FindBestMatch(txt);
         }
         finally { isTranscribing = false; }
     }
 
-    // ===============================================
-    //   SPELL MATCHING
-    // ===============================================
     private void FindBestMatch(string text)
     {
         string[] words = text.Trim().Split(' ');
@@ -164,45 +144,42 @@ public class SpeechSpellcaster : MonoBehaviour
 
         if (bestSpell != null && bestScore >= 0.55f)
         {
-            // [LOG DIKEMBALIKAN]
             Debug.Log($"[SPELL] ASR mengenali: {bestSpell.spellName}");
             _spellToCast = bestSpell;
             _isSpellActionPending = true;
         }
         else
         {
-            // [LOG DIKEMBALIKAN]
             Debug.Log($"[Spell] No match (best={bestScore:0.00})");
         }
     }
 
-    // ===============================================
-    //   DO SPELL
-    // ===============================================
     void OnSpellAction(Spell recognizedSpell)
     {
         if (_pendingSpellName != null)
         {
             if (recognizedSpell.spellName == _pendingSpellName)
             {
-                // [LOG DIKEMBALIKAN]
                 Debug.Log($"[SUCCESS] Ucapan cocok: {_pendingSpellName}");
-
-                // Logika Baru: Panggil Manager (Aksara) -> Fallback ProjectileShooter
                 if (spellManager != null)
                 {
                     spellManager.CastSpellWithAksara(_pendingSpellName);
                 }
                 else
                 {
-                    // Fallback jika manager tidak ada
                     projectileShooter?.TryShoot(_pendingSpellName);
                 }
+                // Catatan: Jika sukses, SpellManager akan menangani dissolve/refresh UI
             }
             else
             {
-                // [LOG DIKEMBALIKAN]
                 Debug.Log($"[FAIL] Ucapan '{recognizedSpell.spellName}' ≠ '{_pendingSpellName}'");
+
+                // [BARU] Panggil fungsi reset seleksi agar kartu kembali normal (Unselected)
+                if (spellManager != null)
+                {
+                    spellManager.ResetSelection();
+                }
             }
 
             _pendingSpellName = null;
@@ -210,36 +187,36 @@ public class SpeechSpellcaster : MonoBehaviour
         }
         else
         {
-            // Mode bebas (tanpa kartu), langsung cast
             Debug.Log($"[FREE CAST] Mengeluarkan spell: {recognizedSpell.spellName}");
             if (spellManager != null)
                 spellManager.CastSpellWithAksara(recognizedSpell.spellName);
         }
     }
 
-    // ===============================================
-    //   HANGUL MATCH CORE
-    // ===============================================
     public static float HangulSimilarity(string a, string b)
     {
         var A = HangulJamo.Decompose(a);
         var B = HangulJamo.Decompose(b);
-        int len = Mathf.Min(A.Count, B.Count);
-        if (len == 0) return 0f;
+
+        int maxLen = Mathf.Max(A.Count, B.Count);
+        if (maxLen == 0) return 0f;
+
+        int minLen = Mathf.Min(A.Count, B.Count);
+
         float t = 0f;
-        for (int i = 0; i < len; i++)
+        for (int i = 0; i < minLen; i++)
         {
             if (A[i].initial == B[i].initial) t += 0.5f;
             if (A[i].vowel == B[i].vowel) t += 0.3f;
             if (A[i].finalJ == B[i].finalJ) t += 0.2f;
         }
-        return t / len;
+
+        return t / maxLen;
     }
 
     public void SetPendingSpell(string spellName)
     {
         _pendingSpellName = spellName;
-        // [LOG DIKEMBALIKAN]
         Debug.Log($"[SpeechSpellcaster] Menunggu ucapan untuk spell: '{spellName}'");
         StartListening();
     }
