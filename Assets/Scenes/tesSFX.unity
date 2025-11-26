@@ -1719,7 +1719,6 @@ MonoBehaviour:
     - "\uC6B0\uC560"
     - "\uBB50\uD574"
     - "\uC65C"
-    - 5
     - "\uC624\uC640\uC774"
     - "\uBAA8\uC544\uC774"
     - "\uC624\uD6C4\uC5D0"
@@ -1733,6 +1732,7 @@ MonoBehaviour:
     - "\uC2F8\uC6B0"
     - "\uC544\uC6B0"
     - "\uC751"
+    - "\uC5B4"
   koreanAsrModelID: sherpa-onnx-zipformer-korean-2024-06-24
   vadModelID: silero_vad_v5
 --- !u!1 &1791893941
