@@ -21,7 +21,7 @@ public class SpeechSpellcaster : MonoBehaviour
 
     [Header("Model Config")]
     [SerializeField] private string koreanAsrModelID = "sherpa-onnx-zipformer-korean-2024-06-24";
-    [SerializeField] private string vadModelID = "silero_vad_v5";
+    [SerializeField] private string vadModelID = "ten-vad";
 
     private SpeechRecognition speechRecognizer;
     private VoiceActivityDetection vad;
