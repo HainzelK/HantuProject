@@ -30,6 +30,9 @@ EditorBuildSettings:
     path: Assets/Scenes/tesHitFeedback.unity
     guid: ec560f34f3b3fa64cae65c1d763ee157
   - enabled: 1
+    path: Assets/Scenes/MainMenu.unity
+    guid: bb94e5458fae4734a8b2a13d6f868897
+  - enabled: 1
     path: Assets/Scenes/tesSFX.unity
     guid: abb1b08554f538041bdab0d683a827d7
   m_configObjects:
