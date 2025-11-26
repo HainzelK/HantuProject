@@ -1817,12 +1817,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   enemyPrefabs:
-  - {fileID: 2308097063520044029, guid: 3d21f9cfdf7935b4e994a10552bd00a1, type: 3}
   - {fileID: 3546755780160334386, guid: 59f6453e6bb162b4bb4974abcfaf9999, type: 3}
+  - {fileID: 2308097063520044029, guid: 3d21f9cfdf7935b4e994a10552bd00a1, type: 3}
   enemyBaseSpeeds:
-  - 0.01
-  - 0.03
-  enemyAccelerations: []
+  - 0.05
+  - 0.1
+  enemyAccelerations:
+  - 0.2
+  - 0.2
   playerTarget: {fileID: 1678815536}
   waveText: {fileID: 471167484}
   killText: {fileID: 2104994749}
