@@ -16,11 +16,11 @@ public class CubeMover : MonoBehaviour
 
     // 🔥 NEW: Attack animation timing (start X seconds before arrival)
     public float attackAnimationLeadTime = 2.0f;
-    private bool attackAnimationPlayed = false;
+    public bool attackAnimationPlayed = false;
 
-    private bool canMove = false;
-    private bool reachedPlayer = false;
-    private float currentSpeed;
+    public bool canMove = false;
+    public  bool reachedPlayer = false;
+    public float currentSpeed;
     private EdgeFlash edgeFlash;
     private Animator animator;
 
@@ -103,6 +103,14 @@ public class CubeMover : MonoBehaviour
             animator.SetTrigger("reachPlayer");
         }
     }
+
+    // Add this to CubeMover
+public void SetSpeed(float newBaseSpeed, float newAcceleration)
+{
+    baseSpeed = newBaseSpeed;
+    acceleration = newAcceleration;
+    currentSpeed = baseSpeed; // 🔥 Critical: Reset current speed
+}
 
     void EnemyReachesPlayer()
     {

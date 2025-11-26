@@ -2033,7 +2033,7 @@ MonoBehaviour:
   - lette
   - uwai
   - sau
-  requireVoiceMatch: 1
+  requireVoiceMatch: 0
   healAmount: 30
 --- !u!4 &1848135152
 Transform:

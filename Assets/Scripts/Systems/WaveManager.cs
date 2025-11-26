@@ -84,64 +84,71 @@ public class WaveManager : MonoBehaviour
         }
     }
 
-    void SpawnCube360()
+void SpawnCube360()
+{
+    if (playerTarget == null) return;
+
+    int prefabIndex = (waveNumber - 1) % enemyPrefabs.Count;
+    GameObject prefabToSpawn = enemyPrefabs[prefabIndex];
+
+    float angle = Random.Range(0f, 360f);
+    Vector3 dir = Quaternion.Euler(0f, angle, 0f) * Vector3.forward;
+    Vector3 spawnPos = playerTarget.position + dir * spawnDistance + Vector3.up * heightOffset;
+
+    GameObject cube = Instantiate(prefabToSpawn, spawnPos, Quaternion.identity);
+    cube.name = $"Enemy_W{waveNumber}_T{Time.frameCount}";
+
+    // 🔥 Apply custom speed & acceleration WITH PROPER RESET
+    CubeMover mover = cube.GetComponent<CubeMover>();
+    if (mover != null)
     {
-        if (playerTarget == null) return;
-
-        int prefabIndex = (waveNumber - 1) % enemyPrefabs.Count;
-        GameObject prefabToSpawn = enemyPrefabs[prefabIndex];
-
-        float angle = Random.Range(0f, 360f);
-        Vector3 dir = Quaternion.Euler(0f, angle, 0f) * Vector3.forward;
-        Vector3 spawnPos = playerTarget.position + dir * spawnDistance + Vector3.up * heightOffset;
-
-        GameObject cube = Instantiate(prefabToSpawn, spawnPos, Quaternion.identity);
-        cube.name = $"Enemy_W{waveNumber}_T{Time.frameCount}";
-
-        // 🔥 Apply custom speed & acceleration
-        CubeMover mover = cube.GetComponent<CubeMover>();
-        if (mover != null)
-        {
-            mover.target = playerTarget;
-            mover.baseSpeed = enemyBaseSpeeds[prefabIndex];
-            mover.acceleration = enemyAccelerations[prefabIndex];
-        }
-        else
-        {
-            Debug.LogWarning($"[Spawn] {cube.name} missing CubeMover!", cube);
-        }
-
-        CubeTracker tracker = cube.GetComponent<CubeTracker>();
-        if (tracker != null)
-        {
-            tracker.Initialize(this);
-        }
-        else
-        {
-            Debug.LogError($"[Spawn] {cube.name} missing CubeTracker! Add to prefab.", cube);
-        }
-
-        EnemyHealth enemyHealth = cube.GetComponent<EnemyHealth>();
-        if (enemyHealth != null)
-        {
-            // HP = base HP for this enemy type + wave bonus
-            float waveHP = baseEnemyHp + (waveNumber - 1) * hpPerWave;
-            enemyHealth.maxHealth = waveHP;
-        }
-        else
-        {
-            Debug.LogWarning($"[Spawn] {cube.name} missing EnemyHealth component!", cube);
-        }
-
-        if (enemyIndicatorManager != null)
-        {
-            enemyIndicatorManager.RegisterEnemy(cube);
-        }
-        else if (enemyIndicatorManager == null && waveNumber == 1)
-        {
-            Debug.LogWarning("[Spawn] EnemyIndicatorManager not assigned! Indicators disabled.");
-        }
+        mover.target = playerTarget;
+        
+        // ✅ SET SPEEDS AND RESET CURRENT SPEED
+        mover.baseSpeed = enemyBaseSpeeds[prefabIndex];
+        mover.acceleration = enemyAccelerations[prefabIndex];
+        mover.currentSpeed = mover.baseSpeed; // ← CRITICAL: Reset current speed
+        
+        // Optional: Reset movement state
+        mover.canMove = true;
+        mover.reachedPlayer = false;
+        mover.attackAnimationPlayed = false;
     }
+    else
+    {
+        Debug.LogWarning($"[Spawn] {cube.name} missing CubeMover!", cube);
+    }
+
+    CubeTracker tracker = cube.GetComponent<CubeTracker>();
+    if (tracker != null)
+    {
+        tracker.Initialize(this);
+    }
+    else
+    {
+        Debug.LogError($"[Spawn] {cube.name} missing CubeTracker! Add to prefab.", cube);
+    }
+
+    EnemyHealth enemyHealth = cube.GetComponent<EnemyHealth>();
+    if (enemyHealth != null)
+    {
+        float waveHP = baseEnemyHp + (waveNumber - 1) * hpPerWave;
+        enemyHealth.maxHealth = waveHP;
+    }
+    else
+    {
+        Debug.LogWarning($"[Spawn] {cube.name} missing EnemyHealth component!", cube);
+    }
+
+    if (enemyIndicatorManager != null)
+    {
+        enemyIndicatorManager.RegisterEnemy(cube);
+    }
+    else if (enemyIndicatorManager == null && waveNumber == 1)
+    {
+        Debug.LogWarning("[Spawn] EnemyIndicatorManager not assigned! Indicators disabled.");
+    }
+}
 
     public void RegisterKill()
     {

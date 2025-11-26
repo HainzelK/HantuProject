@@ -22,7 +22,7 @@ public class ProjectileCollision : MonoBehaviour
             var waveManager = FindObjectOfType<WaveManager>();
             if (waveManager != null)
             {
-                currentDamage = baseDamage + (waveManager.waveNumber - 1) * 10f;
+                currentDamage = baseDamage;
             }
 
             EnemyHealth enemyHealth = collision.gameObject.GetComponent<EnemyHealth>();

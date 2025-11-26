@@ -7,28 +7,27 @@ public class EnemyHealth : MonoBehaviour
     private float currentHealth;
     public float CurrentHealth => currentHealth;
 
-    // 🔥 Visual Feedback
-    public Material hitMaterial; // Optional: assign custom hit material
-    public Color hitFlashColor = Color.red; // Fallback if no hitMaterial
-    public float hitFlashDuration = 0.25f;
+    [Header("Visual Feedback")]
+    public Color hitColor = Color.red;
+    public float hitDuration = 0.25f;
 
-    // 🔊 Audio Feedback
+    [Header("Audio")]
     public AudioClip hitSFX;
     public AudioClip deathSFX;
     public float sfxVolume = 1f;
 
-    private Renderer enemyRenderer;
-    private Material originalMaterial;
+    private MeshRenderer meshRenderer;
+    private Color originalColor;
 
     void Start()
     {
         currentHealth = maxHealth;
-        Debug.Log($"[EnemyHealth] {name} initialized with HP: {currentHealth}");
+        meshRenderer = GetComponent<MeshRenderer>();
         
-        enemyRenderer = GetComponent<Renderer>();
-        if (enemyRenderer != null)
+        if (meshRenderer != null && meshRenderer.material != null)
         {
-            originalMaterial = enemyRenderer.material;
+            // Store original color (works for both URP and Built-in)
+            originalColor = meshRenderer.material.color;
         }
     }
 
@@ -37,14 +36,12 @@ public class EnemyHealth : MonoBehaviour
         if (amount <= 0) return;
         
         currentHealth = Mathf.Clamp(currentHealth - amount, 0, maxHealth);
-        Debug.Log($"[EnemyHealth] {name} took {amount} damage → HP: {currentHealth}");
         
-        // 🔊 Play hit SFX
+        // 🔊 Play hit sound
         if (hitSFX != null)
-        {
             AudioSource.PlayClipAtPoint(hitSFX, transform.position, sfxVolume);
-        }
         
+        // 🔴 Flash red
         StartCoroutine(HitFlash());
         
         if (currentHealth <= 0) 
@@ -53,42 +50,28 @@ public class EnemyHealth : MonoBehaviour
 
     IEnumerator HitFlash()
     {
-        if (enemyRenderer == null || originalMaterial == null) 
-            yield break;
-
-        // 🔥 Use hitMaterial if assigned, otherwise use color flash
-        Material flashMaterial = hitMaterial != null 
-            ? new Material(hitMaterial) 
-            : new Material(originalMaterial) { color = hitFlashColor };
-
-        enemyRenderer.material = flashMaterial;
-        yield return new WaitForSeconds(hitFlashDuration);
-
-        if (enemyRenderer != null)
-        {
-            enemyRenderer.material = originalMaterial;
-            Destroy(flashMaterial);
-        }
+        if (meshRenderer == null) yield break;
+        
+        // 🔥 Direct color modification (URP-safe)
+        Material mat = meshRenderer.material;
+        Color original = mat.color;
+        mat.color = hitColor; // Unity auto-maps to _BaseColor in URP
+        
+        yield return new WaitForSeconds(hitDuration);
+        
+        if (meshRenderer != null)
+            meshRenderer.material.color = original;
     }
 
     void Die()
     {
-        Debug.Log($"[EnemyHealth] {name} DIED!");
-
-        // 🔊 Play death SFX
         if (deathSFX != null)
-        {
             AudioSource.PlayClipAtPoint(deathSFX, transform.position, sfxVolume);
-        }
 
-        CubeMover mover = GetComponent<CubeMover>();
+        var mover = GetComponent<CubeMover>();
         if (mover != null)
-        {
             mover.TriggerDeath();
-        }
         else
-        {
             Destroy(gameObject);
-        }
     }
 }
