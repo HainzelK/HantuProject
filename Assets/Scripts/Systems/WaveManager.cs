@@ -26,6 +26,10 @@ public class WaveManager : MonoBehaviour
     public float hpPerWave = 30f;
     public int killsPerWave = 5;
 
+    [Header("Win Condition")]
+    public int maxWaves = 3;
+    public GameManager gameManager;
+
     private bool isWaveActive = false;
     public int waveNumber = 1;
     private int currentWaveKills = 0;
@@ -59,7 +63,7 @@ public class WaveManager : MonoBehaviour
         currentWaveKills = 0;
         isWaveActive = true;
 
-        waveText.text = "Wave " + waveNumber;
+        waveText.text = "Wave " + waveNumber + "/" + maxWaves;
         UpdateKillText();
 
         spawnCoroutine = StartCoroutine(SpawnWaveRoutine());
@@ -181,6 +185,21 @@ void SpawnCube360()
             }
         }
 
+        // Check if player completed the final wave
+        if (waveNumber >= maxWaves)
+        {
+            Debug.Log($"🎉 ALL WAVES COMPLETED! Player wins!");
+            if (gameManager != null)
+            {
+                gameManager.WinScreen();
+            }
+            else
+            {
+                Debug.LogError("GameManager is NULL! Cannot trigger win screen.");
+            }
+            return; // Stop spawning new waves
+        }
+
         waveNumber++;
         StartCoroutine(DelayedStartWave(1f));
     }
@@ -200,5 +219,28 @@ void SpawnCube360()
         {
             killText.text = $"Kills: {currentWaveKills}/{killsPerWave}";
         }
+    }
+
+    // Klik kanan pada WaveManager di Inspector untuk memaksa menyelesaikan gelombang saat ini
+    // 🧪 DEBUG: Instant complete current wave for testing
+    [ContextMenu("Debug: Complete Wave Instantly")]
+    public void DebugCompleteWave()
+    {
+        Debug.Log("🧪 DEBUG: Forcing wave completion...");
+        currentWaveKills = killsPerWave;
+        CompleteWave();
+    }
+
+    // 🧪 DEBUG: Skip to final wave
+    [ContextMenu("Debug: Jump to Final Wave")]
+    public void DebugJumpToFinalWave()
+    {
+        Debug.Log($"🧪 DEBUG: Jumping to wave {maxWaves}...");
+        waveNumber = maxWaves;
+        if (spawnCoroutine != null)
+        {
+            StopCoroutine(spawnCoroutine);
+        }
+        StartWave();
     }
 }

@@ -32,15 +32,18 @@ public class SpellManager : MonoBehaviour
         public Sprite icon;
     }
 
+    // [BARU] Pengaturan Warna Seleksi
+    [Header("Card Selection Visuals")]
+    public Color normalColor = Color.white;
+    public Color selectedColor = new Color(0.5f, 0.5f, 0.5f, 1f); // Lebih gelap (abu-abu)
+
     [Header("Dissolve Settings")]
     public Material dissolveMaterial;
     public string dissolvePropertyName = "_DissolveAmount";
     public float dissolveDuration = 1.0f;
 
     [Header("Spawn Settings")]
-    [Tooltip("Jarak kartu turun ke bawah sebelum naik")]
     public float slideUpDistance = 100f;
-    [Tooltip("Durasi animasi kartu naik dan fade in")]
     public float slideUpDuration = 0.5f;
 
     [Header("Aksara Animation Settings")]
@@ -61,6 +64,10 @@ public class SpellManager : MonoBehaviour
 
     private int maxHandSize = 3;
     private int _pendingCardIndex = -1;
+
+    // [BARU] Melacak kartu mana yang sedang aktif dipilih secara visual
+    private int _selectedCardIndex = -1;
+
     private EdgeFlash edgeFlash;
 
     void Start()
@@ -141,6 +148,9 @@ void ShowUnlockPopup(string spellName)
 
     void UpdateSpellUI(int indexToAnimate = -1)
     {
+        // Reset selection index karena UI di-build ulang
+        _selectedCardIndex = -1;
+
         foreach (Transform child in spellPanel.transform)
         {
             Destroy(child.gameObject);
@@ -167,6 +177,7 @@ void ShowUnlockPopup(string spellName)
                 imageComponent.sprite = sprite;
                 imageComponent.preserveAspect = true;
                 imageComponent.material = null;
+                imageComponent.color = normalColor; // Set warna awal normal
             }
 
             TextMeshProUGUI textComponent = card.GetComponentInChildren<TextMeshProUGUI>();
@@ -186,6 +197,18 @@ void ShowUnlockPopup(string spellName)
     {
         if (_isDissolving || _isAnimatingAksara) return;
 
+        // [BARU] Logika Swap Selection
+        // 1. Jika ada kartu lain yang sebelumnya dipilih, kembalikan warnanya ke normal
+        if (_selectedCardIndex != -1 && _selectedCardIndex != cardIndex)
+        {
+            SetCardColor(_selectedCardIndex, normalColor);
+        }
+
+        // 2. Set kartu yang baru diklik menjadi gelap (Selected)
+        _selectedCardIndex = cardIndex;
+        SetCardColor(cardIndex, selectedColor);
+
+        // Simpan index kartu yang sedang diproses
         _pendingCardIndex = cardIndex;
 
         if (requireVoiceMatch)
@@ -198,15 +221,43 @@ void ShowUnlockPopup(string spellName)
         }
     }
 
+    // [BARU] Helper untuk mengubah warna kartu berdasarkan index
+    void SetCardColor(int index, Color color)
+    {
+        if (index >= 0 && index < spellPanel.transform.childCount)
+        {
+            Transform card = spellPanel.transform.GetChild(index);
+            Image img = card.GetComponent<Image>() ?? card.GetComponentInChildren<Image>();
+            if (img != null)
+            {
+                img.color = color;
+            }
+        }
+    }
+
+    // [BARU] Fungsi Public untuk mereset seleksi (Dipanggil SpeechSpellcaster saat gagal)
+    public void ResetSelection()
+    {
+        if (_selectedCardIndex != -1)
+        {
+            SetCardColor(_selectedCardIndex, normalColor);
+            _selectedCardIndex = -1;
+            _pendingCardIndex = -1;
+        }
+    }
+
     public void CastSpellWithAksara(string spellName)
     {
+        // [BARU] Jika berhasil cast, kita reset visual seleksi agar tidak stuck gelap
+        // (Opsional: biarkan gelap sampai dissolve, tapi lebih aman di-reset atau biarkan logic dissolve menanganinya)
+        // Di sini saya biarkan logic dissolve yang akan me-refresh UI.
+
         StartCoroutine(ShowAksaraAndCast(spellName));
     }
 
     IEnumerator ShowAksaraAndCast(string spellName)
     {
         _isAnimatingAksara = true;
-
         ExecuteSpellAction(spellName);
 
         if (_currentAksaraInstance != null) Destroy(_currentAksaraInstance);
@@ -223,7 +274,6 @@ void ShowUnlockPopup(string spellName)
 
             _currentAksaraInstance = Instantiate(aksaraPrefab, spawnPos, spawnRot);
             _currentAksaraInstance.transform.SetParent(playerCamera);
-
             Transform model = _currentAksaraInstance.transform;
             model.localScale = Vector3.zero;
             SetAksaraAlpha(_currentAksaraInstance, 0f);
@@ -243,10 +293,6 @@ void ShowUnlockPopup(string spellName)
             }
             model.localScale = targetScale;
             SetAksaraAlpha(_currentAksaraInstance, 1f);
-        }
-        else
-        {
-            if (aksaraPrefab == null) Debug.LogWarning($"[SpellManager] Aksara prefab not found: {path}");
         }
 
         yield return new WaitForSeconds(aksaraDisplayDuration);
@@ -280,19 +326,18 @@ void ShowUnlockPopup(string spellName)
     void SetAksaraAlpha(GameObject obj, float alpha)
     {
         if (obj == null) return;
-
         Renderer[] renderers = obj.GetComponentsInChildren<Renderer>();
         foreach (Renderer r in renderers)
         {
             foreach (Material m in r.materials)
             {
-                if (m.HasProperty("_BaseColor")) // URP
+                if (m.HasProperty("_BaseColor"))
                 {
                     Color c = m.GetColor("_BaseColor");
                     c.a = alpha;
                     m.SetColor("_BaseColor", c);
                 }
-                else if (m.HasProperty("_Color")) // Standard
+                else if (m.HasProperty("_Color"))
                 {
                     Color c = m.color;
                     c.a = alpha;
@@ -306,7 +351,6 @@ void ShowUnlockPopup(string spellName)
     {
         if (spellName == "sau")
         {
-            Debug.Log("[SpellManager] 🟢 Executing 'sau' (Heal)");
             if (PlayerHealth.Instance != null)
             {
                 PlayerHealth.Instance.Heal(healAmount);
@@ -316,7 +360,6 @@ void ShowUnlockPopup(string spellName)
         }
         else
         {
-            Debug.Log($"[SpellManager] 🔥 Executing '{spellName}' (Attack)");
             projectileShooter?.TryShoot(spellName);
         }
     }
@@ -349,6 +392,9 @@ void ShowUnlockPopup(string spellName)
                 if (cardImage.sprite != null) instanceMat.SetTexture("_MainTex", cardImage.sprite.texture);
                 cardImage.material = instanceMat;
 
+                // Pastikan warna putih saat dissolve agar shader terlihat benar
+                cardImage.color = Color.white;
+
                 float timer = 0f;
                 while (timer < dissolveDuration)
                 {
@@ -362,7 +408,7 @@ void ShowUnlockPopup(string spellName)
         }
 
         currentHand[targetIndex] = GetRandomUnlockedSpell();
-        UpdateSpellUI(targetIndex);
+        UpdateSpellUI(targetIndex); // Ini akan me-reset _selectedCardIndex ke -1
 
         if (instanceMat != null) Destroy(instanceMat);
 
@@ -372,7 +418,6 @@ void ShowUnlockPopup(string spellName)
     IEnumerator SlideUpRoutine(int cardIndex)
     {
         yield return new WaitForEndOfFrame();
-
         if (cardIndex < spellPanel.transform.childCount)
         {
             Transform cardTransform = spellPanel.transform.GetChild(cardIndex);
@@ -383,7 +428,6 @@ void ShowUnlockPopup(string spellName)
             {
                 Vector2 targetPos = rect.anchoredPosition;
                 Vector2 startPos = targetPos - new Vector2(0, slideUpDistance);
-
                 rect.anchoredPosition = startPos;
 
                 float timer = 0f;
@@ -392,18 +436,14 @@ void ShowUnlockPopup(string spellName)
                     timer += Time.deltaTime;
                     float rawT = Mathf.Clamp01(timer / slideUpDuration);
                     float smoothT = rawT * rawT * (3f - 2f * rawT);
-
                     rect.anchoredPosition = Vector2.Lerp(startPos, targetPos, smoothT);
                     cg.alpha = Mathf.Lerp(0f, 1f, rawT);
-
                     yield return null;
                 }
-
                 rect.anchoredPosition = targetPos;
                 cg.alpha = 1f;
             }
         }
-
         _pendingCardIndex = -1;
         _isDissolving = false;
     }
