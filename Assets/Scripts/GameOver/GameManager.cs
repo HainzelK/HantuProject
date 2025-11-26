@@ -7,6 +7,7 @@ using UnityEngine.SceneManagement;
 public class GameManager : MonoBehaviour
 {
     public GameObject gameOverUI;
+    public GameObject winScreenUI;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -24,10 +25,17 @@ public class GameManager : MonoBehaviour
         Debug.Log("Game Over Triggered");
         gameOverUI.SetActive(true);
         Time.timeScale = 0f; // Pause the game
-        Debug.Log("Game Paused");
+        Debug.Log("GameOver: Game Paused");
         // Additional game over logic can be added here
     }
 
+    public void WinScreen()
+    {
+        Debug.Log("Win Screen Triggered");
+        winScreenUI.SetActive(true);
+        Time.timeScale = 0f; // Pause the game
+        Debug.Log("Win: Game Paused");
+    }
 
     public void RestartGame()
     {
