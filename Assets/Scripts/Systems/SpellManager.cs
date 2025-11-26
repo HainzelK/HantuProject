@@ -19,6 +19,18 @@ public class SpellManager : MonoBehaviour
     public GameObject spellCardPrefab;
     public GameObject unlockPopup;
     public TextMeshProUGUI unlockText;
+    public Image spellImage; // ← NEW: Spell icon in popup
+
+    // Add this field to your SpellManager class
+    [Header("Spell Icons")]
+    public List<SpellIcon> spellIcons = new List<SpellIcon>();
+
+    [System.Serializable]
+    public class SpellIcon
+    {
+        public string spellName;
+        public Sprite icon;
+    }
 
     // [BARU] Pengaturan Warna Seleksi
     [Header("Card Selection Visuals")]
@@ -58,7 +70,6 @@ public class SpellManager : MonoBehaviour
 
     private EdgeFlash edgeFlash;
 
-
     void Start()
     {
         RefillHand();
@@ -79,14 +90,33 @@ public class SpellManager : MonoBehaviour
         }
     }
 
-    void ShowUnlockPopup(string spellName)
+void ShowUnlockPopup(string spellName)
+{
+    unlockText.text = $"Mantra Baru!";
+    
+    // 🔥 GET SPELL ICON FROM ASSIGNED LIST
+    Sprite spellSprite = null;
+    var iconEntry = spellIcons.Find(icon => icon.spellName == spellName);
+    if (iconEntry != null)
     {
-        unlockText.text = $"New Spell Unlocked!\n{spellName}";
-        foreach (var ui in uiToHide) if (ui != null) ui.SetActive(false);
-        Time.timeScale = 0f;
-        unlockPopup.SetActive(true);
+        spellSprite = iconEntry.icon;
     }
 
+    if (spellSprite != null && spellImage != null)
+    {
+        spellImage.sprite = spellSprite;
+        spellImage.enabled = true;
+    }
+    else
+    {
+        if (spellImage != null) spellImage.enabled = false;
+        Debug.LogWarning($"[SpellManager] Spell icon not assigned for: {spellName}");
+    }
+
+    foreach (var ui in uiToHide) if (ui != null) ui.SetActive(false);
+    Time.timeScale = 0f;
+    unlockPopup.SetActive(true);
+}
     public void OnCloseUnlockPopup()
     {
         unlockPopup.SetActive(false);
@@ -162,8 +192,6 @@ public class SpellManager : MonoBehaviour
             }
         }
     }
-
-    // --- BAGIAN UTAMA (MODIFIED) ---
 
     void OnSpellClicked(string spellName, int cardIndex)
     {
@@ -247,7 +275,6 @@ public class SpellManager : MonoBehaviour
             _currentAksaraInstance = Instantiate(aksaraPrefab, spawnPos, spawnRot);
             _currentAksaraInstance.transform.SetParent(playerCamera);
             Transform model = _currentAksaraInstance.transform;
-
             model.localScale = Vector3.zero;
             SetAksaraAlpha(_currentAksaraInstance, 0f);
 

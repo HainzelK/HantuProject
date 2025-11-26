@@ -150,12 +150,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maxHealth: 100
-  hitMaterial: {fileID: 0}
-  hitFlashColor: {r: 1, g: 0, b: 0, a: 1}
-  hitFlashDuration: 0.25
+  hitColor: {r: 1, g: 0, b: 0, a: 1}
+  hitDuration: 0.25
   hitSFX: {fileID: 8300000, guid: 62539a22e2a9b634184e5d6c99c207e7, type: 3}
   deathSFX: {fileID: 0}
-  sfxVolume: 1
+  sfxVolume: 5
 --- !u!114 &5621664649254145621
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -169,14 +168,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   target: {fileID: 0}
-  baseSpeed: 0.4
-  acceleration: 0.07
+  baseSpeed: 1
+  acceleration: 1
   rotateSpeed: 5
-  stopDistance: 0.45
+  stopDistance: 1
   destroyOnReach: 1
-  destroyDelay: 1
+  destroyDelay: 0.5
   hitAnimationDuration: 0.3
-  attackAnimationLeadTime: 2
+  attackAnimationLeadTime: 4
+  attackAnimationPlayed: 0
+  canMove: 0
+  reachedPlayer: 0
+  currentSpeed: 0
 --- !u!114 &4772462370419068008
 MonoBehaviour:
   m_ObjectHideFlags: 0
