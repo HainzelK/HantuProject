@@ -7,12 +7,19 @@
       "dependencies": {},
       "url": "https://packages.unity.com"
     },
-    "com.eitan.sherpa-onnx-unity": {
-      "version": "https://github.com/EitanWong/com.eitan.sherpa-onnx-unity.git#upm",
+    "com.cysharp.unitask": {
+      "version": "2.5.10",
       "depth": 0,
-      "source": "git",
+      "source": "registry",
       "dependencies": {},
-      "hash": "721b91fdc227ccd881c2300bc01627de167b657b"
+      "url": "https://package.openupm.com"
+    },
+    "com.github.asus4.tflite": {
+      "version": "2.19.0-p3",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {},
+      "url": "https://registry.npmjs.com"
     },
     "com.unity.2d.sprite": {
       "version": "1.0.0",

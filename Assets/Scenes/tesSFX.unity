@@ -2312,58 +2312,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d95c52b7436c0f94e9092465f28abd44, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  spells:
-  - spellName: api
-    variations:
-    - "\uC544\uD53C"
-    - "\uC544\uBE44"
-    - "\uC544\uC090"
-    - "\uC704"
-    - "\uC811\uC774"
-    - "\uCEE4\uD53C"
-  - spellName: lette
-    variations:
-    - "\uB808\uD14C"
-    - "\uB974\uB5BC"
-    - "\uB80C\uD2B8"
-    - "\uC5B4\uB54C"
-    - "\uB291\uB300"
-    - "\uB124"
-    - "\uC778\uB370"
-    - "\uB974\uC740\uB370"
-    - "\uADF8\uB798"
-    - "\uB86F\uB370"
-    - "\uB54C"
-    - "\uBA87 \uC5D0"
-    - "\uB7A9?"
-    - "\uB2A6\uB124"
-    - "\uBA87 \uB144"
-  - spellName: uwai
-    variations:
-    - "\uC6B0\uC560"
-    - "\uBB50\uD574"
-    - "\uC65C"
-    - "\uC624\uC640\uC774"
-    - "\uBAA8\uC544\uC774"
-    - "\uC624\uD6C4\uC5D0"
-    - "\uBB50\uC57C"
-    - "\uBB50\uAC00 \uD574"
-    - "\uBB50\uD558\uC774"
-    - "\uC544 \uC77C"
-    - "\uC653"
-    - "\uB178\uD558\uC778?"
-  - spellName: sau
-    variations:
-    - "\uC2F8\uC6B0"
-    - "\uC544\uC6B0"
-    - "\uC751"
-    - "\uC5B4"
-    - "\uB098"
-    - "\uADF8\uB7FC"
-    - "\uBE0C\uB77C\uC6B0"
-    - "\uBD80\uD0C1"
-  koreanAsrModelID: sherpa-onnx-zipformer-korean-2024-06-24
-  vadModelID: ten-vad
+  modelFileName: soundclassifier_with_metadata.tflite
+  labelFileName: labels.txt
+  threshold: 0.85
+  detectionInterval: 0.1
+  recordingTimeout: 5
 --- !u!1 &1783972579
 GameObject:
   m_ObjectHideFlags: 0
