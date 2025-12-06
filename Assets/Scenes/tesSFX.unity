@@ -2362,9 +2362,6 @@ MonoBehaviour:
     - "\uADF8\uB7FC"
     - "\uBE0C\uB77C\uC6B0"
     - "\uBD80\uD0C1"
-  - spellName: sau
-    variations:
-    - 
   koreanAsrModelID: sherpa-onnx-zipformer-korean-2024-06-24
   vadModelID: ten-vad
 --- !u!1 &1783972579
@@ -2754,7 +2751,7 @@ MonoBehaviour:
   - lette
   - uwai
   - sau
-  requireVoiceMatch: 0
+  requireVoiceMatch: 1
   healAmount: 30
 --- !u!4 &1848135152
 Transform:
